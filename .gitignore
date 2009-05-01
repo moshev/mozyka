@@ -1,5 +1,8 @@
 build/
+*.swp
+.sconsign.dblite
 *.os
 *.so
 *.o
+*.c
 
