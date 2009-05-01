@@ -1,4 +1,5 @@
 build/
+*.os
 *.so
 *.o
 
