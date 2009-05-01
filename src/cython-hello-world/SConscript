@@ -1,0 +1,62 @@
+import distutils.sysconfig
+import os
+import re
+import sys
+
+env = Environment()
+env.ParseConfig('python3-config --includes')
+env.ParseConfig('python3-config --libs')
+env['SHLIBPREFIX']=''
+
+# adding Cython builder
+if os.name == 'nt':
+    cython_executable = '"%s" "%s"' % (sys.executable,
+        os.path.join(sys.prefix, 'Scripts', 'cython.py'))
+else:
+    cython_executable = 'cython'
+cython_builder = Builder(action='%s -o $TARGET $SOURCE' % cython_executable)
+env.Append(BUILDERS={'Cython': cython_builder})
+
+
+# build extension(s)
+import setup
+for e in setup.get_extensions():
+    envx = env.Clone()
+    # adjust compiler flags/options
+    if e.define_macros:
+        envx.AppendUnique(CPPDEFINES=dict(e.define_macros))
+    if e.libraries:
+        envx.AppendUnique(LIBS=e.libraries)
+    if e.include_dirs:
+        envx.AppendUnique(CPPPATH=e.include_dirs)
+    # looking for common src dir prefix
+    sources = e.sources[:]
+    build_dir = None
+    src_dir = None
+    for s in sources:
+        parts = re.split(r'[\\/]', s, 1)
+        if len(parts) != 2 or parts[0] == '':
+            break
+        else:
+            prefix = parts[0]
+            if src_dir is None:
+                src_dir = prefix
+            elif prefix != src_dir:
+                break
+    else:
+        # src_dir found
+        if src_dir:
+            build_dir = os.path.join('build',
+                'temp.%s-%d.%d' % (sys.platform, sys.version_info[0], sys.version_info[1]))
+            envx.VariantDir(os.path.join(build_dir, src_dir),
+                src_dir,
+                duplicate=0)
+            sources = [os.path.join(build_dir, s) for s in sources]
+    # check if we build cython extension
+    for ix, s in enumerate(sources):
+        if s.endswith('.pyx'):
+            cfile = s[:-4]+'.c'
+            sources[ix] = cfile
+            envx.Cython(cfile, s)
+    # and schedule it for building
+    envx.SharedLibrary(e.name.replace('.', os.sep), sources)
