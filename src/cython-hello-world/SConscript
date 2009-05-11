@@ -1,4 +1,5 @@
 import distutils.sysconfig
+from distutils.extension import Extension 
 import os
 import re
 import sys
@@ -17,10 +18,9 @@ else:
 cython_builder = Builder(action='%s -o $TARGET $SOURCE' % cython_executable)
 env.Append(BUILDERS={'Cython': cython_builder})
 
+extensions = [Extension("helloworld", ["helloworld.pyx"], libraries='-lSDL'),]
 
-# build extension(s)
-import setup
-for e in setup.get_extensions():
+for e in extensions:
     envx = env.Clone()
     # adjust compiler flags/options
     if e.define_macros:
