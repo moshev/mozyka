@@ -1,2 +1,605 @@
-print unicode("Hello" + "World")
+cdef extern from 'SDL/SDL.h':
+    #typedef 
+
+# Constants
+
+# Boolean values 
+cdef int GL_FALSE = 0x0
+cdef int GL_TRUE = 0x1
+
+# Data types 
+cdef int GL_BYTE = 0x1400
+cdef int GL_UNSIGNED_BYTE = 0x1401
+cdef int GL_SHORT = 0x1402
+cdef int GL_UNSIGNED_SHORT = 0x1403
+cdef int GL_INT = 0x1404
+cdef int GL_UNSIGNED_INT = 0x1405
+cdef int GL_FLOAT = 0x1406
+cdef int GL_2_BYTES = 0x1407
+cdef int GL_3_BYTES = 0x1408
+cdef int GL_4_BYTES = 0x1409
+cdef int GL_DOUBLE = 0x140A
+
+# Primitives 
+cdef int GL_POINTS = 0x0000
+cdef int GL_LINES = 0x0001
+cdef int GL_LINE_LOOP = 0x0002
+cdef int GL_LINE_STRIP = 0x0003
+cdef int GL_TRIANGLES = 0x0004
+cdef int GL_TRIANGLE_STRIP = 0x0005
+cdef int GL_TRIANGLE_FAN = 0x0006
+cdef int GL_QUADS = 0x0007
+cdef int GL_QUAD_STRIP = 0x0008
+cdef int GL_POLYGON = 0x0009
+
+# Vertex Arrays 
+cdef int GL_VERTEX_ARRAY = 0x8074
+cdef int GL_NORMAL_ARRAY = 0x8075
+cdef int GL_COLOR_ARRAY = 0x8076
+cdef int GL_INDEX_ARRAY = 0x8077
+cdef int GL_TEXTURE_COORD_ARRAY = 0x807a
+cdef int GL_EDGE_FLAG_ARRAY = 0x8079
+cdef int GL_VERTEX_ARRAY_SIZE = 0x807A
+cdef int GL_VERTEX_ARRAY_TYPE = 0x807B
+cdef int GL_VERTEX_ARRAY_STRIDE = 0x807C
+cdef int GL_NORMAL_ARRAY_TYPE = 0x807E
+cdef int GL_NORMAL_ARRAY_STRIDE = 0x807F
+cdef int GL_COLOR_ARRAY_SIZE = 0x8081
+cdef int GL_COLOR_ARRAY_TYPE = 0x8082
+cdef int GL_COLOR_ARRAY_STRIDE = 0x8083
+cdef int GL_INDEX_ARRAY_TYPE = 0x8085
+cdef int GL_INDEX_ARRAY_STRIDE = 0x8086
+cdef int GL_TEXTURE_COORD_ARRAY_SIZE = 0x8088
+cdef int GL_TEXTURE_COORD_ARRAY_TYPE = 0x8089
+cdef int GL_TEXTURE_COORD_ARRAY_STRIDE = 0x808A
+cdef int GL_EDGE_FLAG_ARRAY_STRIDE = 0x808C
+cdef int GL_VERTEX_ARRAY_POINTER = 0x808E
+cdef int GL_NORMAL_ARRAY_POINTER = 0x808F
+cdef int GL_COLOR_ARRAY_POINTER = 0x8090
+cdef int GL_INDEX_ARRAY_POINTER = 0x8091
+cdef int GL_TEXTURE_COORD_ARRAY_POINTER = 0x8092
+cdef int GL_EDGE_FLAG_ARRAY_POINTER = 0x8093
+cdef int GL_V2F = 0x2A20
+cdef int GL_V3F = 0x2A21
+cdef int GL_C4UB_V2F = 0x2A22
+cdef int GL_C4UB_V3F = 0x2A23
+cdef int GL_C3F_V3F = 0x2A24
+cdef int GL_N3F_V3F = 0x2A25
+cdef int GL_C4F_N3F_V3F = 0x2A26
+cdef int GL_T2F_V3F = 0x2A27
+cdef int GL_T4F_V4F = 0x2A28
+cdef int GL_T2F_C4UB_V3F = 0x2A29
+cdef int GL_T2F_C3F_V3F = 0x2A2A
+cdef int GL_T2F_N3F_V3F = 0x2A2B
+cdef int GL_T2F_C4F_N3F_V3F = 0x2A2C
+cdef int GL_T4F_C4F_N3F_V4F = 0x2A2D
+
+# Matrix Mode 
+cdef int GL_MATRIX_MODE = 0x0BA0
+cdef int GL_MODELVIEW = 0x1700
+cdef int GL_PROJECTION = 0x1701
+cdef int GL_TEXTURE = 0x1702
+
+# Pocdef ints 
+cdef int GL_POINT_SMOOTH = 0x0B10
+cdef int GL_POINT_SIZE = 0x0B11
+cdef int GL_POINT_SIZE_GRANULARITY  = 0x0B13
+cdef int GL_POINT_SIZE_RANGE = 0x0B12
+
+# Lines 
+cdef int GL_LINE_SMOOTH = 0x0B20
+cdef int GL_LINE_STIPPLE = 0x0B24
+cdef int GL_LINE_STIPPLE_PATTERN = 0x0B25
+cdef int GL_LINE_STIPPLE_REPEAT = 0x0B26
+cdef int GL_LINE_WIDTH = 0x0B21
+cdef int GL_LINE_WIDTH_GRANULARITY = 0x0B23
+cdef int GL_LINE_WIDTH_RANGE = 0x0B22
+
+# Polygons 
+cdef int GL_POINT = 0x1B00
+cdef int GL_LINE = 0x1B01
+cdef int GL_FILL = 0x1B02
+cdef int GL_CW = 0x0900
+cdef int GL_CCW = 0x0901
+cdef int GL_FRONT = 0x0404
+cdef int GL_BACK = 0x0405
+cdef int GL_POLYGON_MODE = 0x0B40
+cdef int GL_POLYGON_SMOOTH = 0x0B41
+cdef int GL_POLYGON_STIPPLE = 0x0B42
+cdef int GL_EDGE_FLAG = 0x0B43
+cdef int GL_CULL_FACE = 0x0B44
+cdef int GL_CULL_FACE_MODE = 0x0B45
+cdef int GL_FRONT_FACE = 0x0B46
+cdef int GL_POLYGON_OFFSET_FACTOR = 0x8038
+cdef int GL_POLYGON_OFFSET_UNITS = 0x2A00
+cdef int GL_POLYGON_OFFSET_POINT = 0x2A01
+cdef int GL_POLYGON_OFFSET_LINE = 0x2A02
+cdef int GL_POLYGON_OFFSET_FILL = 0x8037
+
+# Display Lists 
+cdef int GL_COMPILE = 0x1300
+cdef int GL_COMPILE_AND_EXECUTE = 0x1301
+cdef int GL_LIST_BASE = 0x0B32
+cdef int GL_LIST_INDEX = 0x0B33
+cdef int GL_LIST_MODE = 0x0B30
+
+# Depth buffer 
+cdef int GL_NEVER = 0x0200
+cdef int GL_LESS = 0x0201
+cdef int GL_EQUAL = 0x0202
+cdef int GL_LEQUAL = 0x0203
+cdef int GL_GREATER = 0x0204
+cdef int GL_NOTEQUAL = 0x0205
+cdef int GL_GEQUAL = 0x0206
+cdef int GL_ALWAYS = 0x0207
+cdef int GL_DEPTH_TEST = 0x0B71
+cdef int GL_DEPTH_BITS = 0x0D56
+cdef int GL_DEPTH_CLEAR_VALUE = 0x0B73
+cdef int GL_DEPTH_FUNC = 0x0B74
+cdef int GL_DEPTH_RANGE = 0x0B70
+cdef int GL_DEPTH_WRITEMASK = 0x0B72
+cdef int GL_DEPTH_COMPONENT = 0x1902
+
+# Lighting 
+cdef int GL_LIGHTING = 0x0B50
+cdef int GL_LIGHT0 = 0x4000
+cdef int GL_LIGHT1 = 0x4001
+cdef int GL_LIGHT2 = 0x4002
+cdef int GL_LIGHT3 = 0x4003
+cdef int GL_LIGHT4 = 0x4004
+cdef int GL_LIGHT5 = 0x4005
+cdef int GL_LIGHT6 = 0x4006
+cdef int GL_LIGHT7 = 0x4007
+cdef int GL_SPOT_EXPONENT = 0x1205
+cdef int GL_SPOT_CUTOFF = 0x1206
+cdef int GL_CONSTANT_ATTENUATION = 0x1207
+cdef int GL_LINEAR_ATTENUATION = 0x1208
+cdef int GL_QUADRATIC_ATTENUATION = 0x1209
+cdef int GL_AMBIENT = 0x1200
+cdef int GL_DIFFUSE = 0x1201
+cdef int GL_SPECULAR = 0x1202
+cdef int GL_SHININESS = 0x1601
+cdef int GL_EMISSION = 0x1600
+cdef int GL_POSITION = 0x1203
+cdef int GL_SPOT_DIRECTION = 0x1204
+cdef int GL_AMBIENT_AND_DIFFUSE = 0x1602
+cdef int GL_COLOR_INDEXES = 0x1603
+cdef int GL_LIGHT_MODEL_TWO_SIDE = 0x0B52
+cdef int GL_LIGHT_MODEL_LOCAL_VIEWER = 0x0B51
+cdef int GL_LIGHT_MODEL_AMBIENT = 0x0B53
+cdef int GL_FRONT_AND_BACK = 0x0408
+cdef int GL_SHADE_MODEL = 0x0B54
+cdef int GL_FLAT = 0x1D00
+cdef int GL_SMOOTH = 0x1D01
+cdef int GL_COLOR_MATERIAL = 0x0B57
+cdef int GL_COLOR_MATERIAL_FACE = 0x0B55
+cdef int GL_COLOR_MATERIAL_PARAMETER = 0x0B56
+cdef int GL_NORMALIZE = 0x0BA1
+
+# User clipping planes 
+cdef int GL_CLIP_PLANE0 = 0x3000
+cdef int GL_CLIP_PLANE1 = 0x3001
+cdef int GL_CLIP_PLANE2 = 0x3002
+cdef int GL_CLIP_PLANE3 = 0x3003
+cdef int GL_CLIP_PLANE4 = 0x3004
+cdef int GL_CLIP_PLANE5 = 0x3005
+
+# Accumulation buffer 
+cdef int GL_ACCUM_RED_BITS = 0x0D58
+cdef int GL_ACCUM_GREEN_BITS = 0x0D59
+cdef int GL_ACCUM_BLUE_BITS = 0x0D5A
+cdef int GL_ACCUM_ALPHA_BITS = 0x0D5B
+cdef int GL_ACCUM_CLEAR_VALUE = 0x0B80
+cdef int GL_ACCUM = 0x0100
+cdef int GL_ADD = 0x0104
+cdef int GL_LOAD = 0x0101
+cdef int GL_MULT = 0x0103
+cdef int GL_RETURN = 0x0102
+
+# Alpha testing 
+cdef int GL_ALPHA_TEST = 0x0BC0
+cdef int GL_ALPHA_TEST_REF = 0x0BC2
+cdef int GL_ALPHA_TEST_FUNC = 0x0BC1
+
+# Blending 
+cdef int GL_BLEND = 0x0BE2
+cdef int GL_BLEND_SRC = 0x0BE1
+cdef int GL_BLEND_DST = 0x0BE0
+cdef int GL_ZERO = 0x0
+cdef int GL_ONE = 0x1
+cdef int GL_SRC_COLOR = 0x0300
+cdef int GL_ONE_MINUS_SRC_COLOR = 0x0301
+cdef int GL_SRC_ALPHA = 0x0302
+cdef int GL_ONE_MINUS_SRC_ALPHA = 0x0303
+cdef int GL_DST_ALPHA = 0x0304
+cdef int GL_ONE_MINUS_DST_ALPHA = 0x0305
+cdef int GL_DST_COLOR = 0x0306
+cdef int GL_ONE_MINUS_DST_COLOR = 0x0307
+cdef int GL_SRC_ALPHA_SATURATE = 0x0308
+
+# Render Mode 
+cdef int GL_FEEDBACK = 0x1C01
+cdef int GL_RENDER = 0x1C00
+cdef int GL_SELECT = 0x1C02
+
+# Feedback 
+cdef int GL_2D = 0x0600
+cdef int GL_3D = 0x0601
+cdef int GL_3D_COLOR = 0x0602
+cdef int GL_3D_COLOR_TEXTURE = 0x0603
+cdef int GL_4D_COLOR_TEXTURE = 0x0604
+cdef int GL_POINT_TOKEN = 0x0701
+cdef int GL_LINE_TOKEN = 0x0702
+cdef int GL_LINE_RESET_TOKEN = 0x0707
+cdef int GL_POLYGON_TOKEN = 0x0703
+cdef int GL_BITMAP_TOKEN = 0x0704
+cdef int GL_DRAW_PIXEL_TOKEN = 0x0705
+cdef int GL_COPY_PIXEL_TOKEN = 0x0706
+cdef int GL_PASS_THROUGH_TOKEN = 0x0700
+cdef int GL_FEEDBACK_BUFFER_POINTER = 0x0DF0
+cdef int GL_FEEDBACK_BUFFER_SIZE = 0x0DF1
+cdef int GL_FEEDBACK_BUFFER_TYPE = 0x0DF2
+
+# Selection 
+cdef int GL_SELECTION_BUFFER_POINTER = 0x0DF3
+cdef int GL_SELECTION_BUFFER_SIZE = 0x0DF4
+
+# Fog 
+cdef int GL_FOG = 0x0B60
+cdef int GL_FOG_MODE = 0x0B65
+cdef int GL_FOG_DENSITY = 0x0B62
+cdef int GL_FOG_COLOR = 0x0B66
+cdef int GL_FOG_INDEX = 0x0B61
+cdef int GL_FOG_START = 0x0B63
+cdef int GL_FOG_END = 0x0B64
+cdef int GL_LINEAR = 0x2601
+cdef int GL_EXP = 0x0800
+cdef int GL_EXP2 = 0x0801
+
+# Logic Ops 
+cdef int GL_LOGIC_OP = 0x0BF1
+cdef int GL_INDEX_LOGIC_OP = 0x0BF1
+cdef int GL_COLOR_LOGIC_OP = 0x0BF2
+cdef int GL_LOGIC_OP_MODE = 0x0BF0
+cdef int GL_CLEAR = 0x1500
+cdef int GL_SET = 0x150F
+cdef int GL_COPY = 0x1503
+cdef int GL_COPY_INVERTED = 0x150C
+cdef int GL_NOOP = 0x1505
+cdef int GL_INVERT = 0x150A
+cdef int GL_AND = 0x1501
+cdef int GL_NAND = 0x150E
+cdef int GL_OR = 0x1507
+cdef int GL_NOR = 0x1508
+cdef int GL_XOR = 0x1506
+cdef int GL_EQUIV = 0x1509
+cdef int GL_AND_REVERSE = 0x1502
+cdef int GL_AND_INVERTED = 0x1504
+cdef int GL_OR_REVERSE = 0x150B
+cdef int GL_OR_INVERTED = 0x150D
+
+# Stencil 
+cdef int GL_STENCIL_BITS = 0x0D57
+cdef int GL_STENCIL_TEST = 0x0B90
+cdef int GL_STENCIL_CLEAR_VALUE = 0x0B91
+cdef int GL_STENCIL_FUNC = 0x0B92
+cdef int GL_STENCIL_VALUE_MASK = 0x0B93
+cdef int GL_STENCIL_FAIL = 0x0B94
+cdef int GL_STENCIL_PASS_DEPTH_FAIL = 0x0B95
+cdef int GL_STENCIL_PASS_DEPTH_PASS = 0x0B96
+cdef int GL_STENCIL_REF = 0x0B97
+cdef int GL_STENCIL_WRITEMASK = 0x0B98
+cdef int GL_STENCIL_INDEX = 0x1901
+cdef int GL_KEEP = 0x1E00
+cdef int GL_REPLACE = 0x1E01
+cdef int GL_INCR = 0x1E02
+cdef int GL_DECR = 0x1E03
+
+# Buffers, Pixel Drawing/Reading 
+cdef int GL_NONE = 0x0
+cdef int GL_LEFT = 0x0406
+cdef int GL_RIGHT = 0x0407
+#GL_FRONT = 0x0404 
+#GL_BACK = 0x0405 
+#GL_FRONT_AND_BACK = 0x0408 
+cdef int GL_FRONT_LEFT = 0x0400
+cdef int GL_FRONT_RIGHT = 0x0401
+cdef int GL_BACK_LEFT = 0x0402
+cdef int GL_BACK_RIGHT = 0x0403
+cdef int GL_AUX0 = 0x0409
+cdef int GL_AUX1 = 0x040A
+cdef int GL_AUX2 = 0x040B
+cdef int GL_AUX3 = 0x040C
+cdef int GL_COLOR_INDEX = 0x1900
+cdef int GL_RED = 0x1903
+cdef int GL_GREEN = 0x1904
+cdef int GL_BLUE = 0x1905
+cdef int GL_ALPHA = 0x1906
+cdef int GL_LUMINANCE = 0x1909
+cdef int GL_LUMINANCE_ALPHA = 0x190A
+cdef int GL_ALPHA_BITS = 0x0D55
+cdef int GL_RED_BITS = 0x0D52
+cdef int GL_GREEN_BITS = 0x0D53
+cdef int GL_BLUE_BITS = 0x0D54
+cdef int GL_INDEX_BITS = 0x0D51
+cdef int GL_SUBPIXEL_BITS = 0x0D50
+cdef int GL_AUX_BUFFERS = 0x0C00
+cdef int GL_READ_BUFFER = 0x0C02
+cdef int GL_DRAW_BUFFER = 0x0C01
+cdef int GL_DOUBLEBUFFER = 0x0C32
+cdef int GL_STEREO = 0x0C33
+cdef int GL_BITMAP = 0x1A00
+cdef int GL_COLOR = 0x1800
+cdef int GL_DEPTH = 0x1801
+cdef int GL_STENCIL = 0x1802
+cdef int GL_DITHER = 0x0BD0
+cdef int GL_RGB = 0x1907
+cdef int GL_RGBA = 0x1908
+
+# Implementation limits 
+cdef int GL_MAX_LIST_NESTING = 0x0B31
+cdef int GL_MAX_EVAL_ORDER = 0x0D30
+cdef int GL_MAX_LIGHTS = 0x0D31
+cdef int GL_MAX_CLIP_PLANES = 0x0D32
+cdef int GL_MAX_TEXTURE_SIZE = 0x0D33
+cdef int GL_MAX_PIXEL_MAP_TABLE = 0x0D34
+cdef int GL_MAX_ATTRIB_STACK_DEPTH = 0x0D35
+cdef int GL_MAX_MODELVIEW_STACK_DEPTH = 0x0D36
+cdef int GL_MAX_NAME_STACK_DEPTH = 0x0D37
+cdef int GL_MAX_PROJECTION_STACK_DEPTH = 0x0D38
+cdef int GL_MAX_TEXTURE_STACK_DEPTH = 0x0D39
+cdef int GL_MAX_VIEWPORT_DIMS = 0x0D3A
+cdef int GL_MAX_CLIENT_ATTRIB_STACK_DEPTH = 0x0D3B
+
+# Gets 
+cdef int GL_ATTRIB_STACK_DEPTH = 0x0BB0
+cdef int GL_CLIENT_ATTRIB_STACK_DEPTH = 0x0BB1
+cdef int GL_COLOR_CLEAR_VALUE = 0x0C22
+cdef int GL_COLOR_WRITEMASK = 0x0C23
+cdef int GL_CURRENT_INDEX = 0x0B01
+cdef int GL_CURRENT_COLOR = 0x0B00
+cdef int GL_CURRENT_NORMAL = 0x0B02
+cdef int GL_CURRENT_RASTER_COLOR = 0x0B04
+cdef int GL_CURRENT_RASTER_DISTANCE = 0x0B09
+cdef int GL_CURRENT_RASTER_INDEX = 0x0B05
+cdef int GL_CURRENT_RASTER_POSITION = 0x0B07
+cdef int GL_CURRENT_RASTER_TEXTURE_COORDS = 0x0B06
+cdef int GL_CURRENT_RASTER_POSITION_VALID = 0x0B08
+cdef int GL_CURRENT_TEXTURE_COORDS = 0x0B03
+cdef int GL_INDEX_CLEAR_VALUE = 0x0C20
+cdef int GL_INDEX_MODE = 0x0C30
+cdef int GL_INDEX_WRITEMASK = 0x0C21
+cdef int GL_MODELVIEW_MATRIX = 0x0BA6
+cdef int GL_MODELVIEW_STACK_DEPTH = 0x0BA3
+cdef int GL_NAME_STACK_DEPTH = 0x0D70
+cdef int GL_PROJECTION_MATRIX = 0x0BA7
+cdef int GL_PROJECTION_STACK_DEPTH = 0x0BA4
+cdef int GL_RENDER_MODE = 0x0C40
+cdef int GL_RGBA_MODE = 0x0C31
+cdef int GL_TEXTURE_MATRIX = 0x0BA8
+cdef int GL_TEXTURE_STACK_DEPTH = 0x0BA5
+cdef int GL_VIEWPORT = 0x0BA2
+
+# Evaluators 
+cdef int GL_AUTO_NORMAL = 0x0D80
+cdef int GL_MAP1_COLOR_4 = 0x0D90
+cdef int GL_MAP1_INDEX = 0x0D91
+cdef int GL_MAP1_NORMAL = 0x0D92
+cdef int GL_MAP1_TEXTURE_COORD_1 = 0x0D93
+cdef int GL_MAP1_TEXTURE_COORD_2 = 0x0D94
+cdef int GL_MAP1_TEXTURE_COORD_3 = 0x0D95
+cdef int GL_MAP1_TEXTURE_COORD_4 = 0x0D96
+cdef int GL_MAP1_VERTEX_3 = 0x0D97
+cdef int GL_MAP1_VERTEX_4 = 0x0D98
+cdef int GL_MAP2_COLOR_4 = 0x0DB0
+cdef int GL_MAP2_INDEX = 0x0DB1
+cdef int GL_MAP2_NORMAL = 0x0DB2
+cdef int GL_MAP2_TEXTURE_COORD_1 = 0x0DB3
+cdef int GL_MAP2_TEXTURE_COORD_2 = 0x0DB4
+cdef int GL_MAP2_TEXTURE_COORD_3 = 0x0DB5
+cdef int GL_MAP2_TEXTURE_COORD_4 = 0x0DB6
+cdef int GL_MAP2_VERTEX_3 = 0x0DB7
+cdef int GL_MAP2_VERTEX_4 = 0x0DB8
+cdef int GL_MAP1_GRID_DOMAIN = 0x0DD0
+cdef int GL_MAP1_GRID_SEGMENTS = 0x0DD1
+cdef int GL_MAP2_GRID_DOMAIN = 0x0DD2
+cdef int GL_MAP2_GRID_SEGMENTS = 0x0DD3
+cdef int GL_COEFF = 0x0A00
+cdef int GL_ORDER = 0x0A01
+cdef int GL_DOMAIN = 0x0A02
+
+# Hcdef ints 
+cdef int GL_PERSPECTIVE_CORRECTION_HINT = 0x0C50
+cdef int GL_POINT_SMOOTH_HINT = 0x0C51
+cdef int GL_LINE_SMOOTH_HINT = 0x0C52
+cdef int GL_POLYGON_SMOOTH_HINT = 0x0C53
+cdef int GL_FOG_HINT = 0x0C54
+cdef int GL_DONT_CARE = 0x1100
+cdef int GL_FASTEST = 0x1101
+cdef int GL_NICEST = 0x1102
+
+# Scissor box 
+cdef int GL_SCISSOR_BOX = 0x0C10
+cdef int GL_SCISSOR_TEST = 0x0C11
+
+# Pixel Mode / Transfer 
+cdef int GL_MAP_COLOR = 0x0D10
+cdef int GL_MAP_STENCIL = 0x0D11
+cdef int GL_INDEX_SHIFT = 0x0D12
+cdef int GL_INDEX_OFFSET = 0x0D13
+cdef int GL_RED_SCALE = 0x0D14
+cdef int GL_RED_BIAS = 0x0D15
+cdef int GL_GREEN_SCALE = 0x0D18
+cdef int GL_GREEN_BIAS = 0x0D19
+cdef int GL_BLUE_SCALE = 0x0D1A
+cdef int GL_BLUE_BIAS = 0x0D1B
+cdef int GL_ALPHA_SCALE = 0x0D1C
+cdef int GL_ALPHA_BIAS = 0x0D1D
+cdef int GL_DEPTH_SCALE = 0x0D1E
+cdef int GL_DEPTH_BIAS = 0x0D1F
+cdef int GL_PIXEL_MAP_S_TO_S_SIZE = 0x0CB1
+cdef int GL_PIXEL_MAP_I_TO_I_SIZE = 0x0CB0
+cdef int GL_PIXEL_MAP_I_TO_R_SIZE = 0x0CB2
+cdef int GL_PIXEL_MAP_I_TO_G_SIZE = 0x0CB3
+cdef int GL_PIXEL_MAP_I_TO_B_SIZE = 0x0CB4
+cdef int GL_PIXEL_MAP_I_TO_A_SIZE = 0x0CB5
+cdef int GL_PIXEL_MAP_R_TO_R_SIZE = 0x0CB6
+cdef int GL_PIXEL_MAP_G_TO_G_SIZE = 0x0CB7
+cdef int GL_PIXEL_MAP_B_TO_B_SIZE = 0x0CB8
+cdef int GL_PIXEL_MAP_A_TO_A_SIZE = 0x0CB9
+cdef int GL_PIXEL_MAP_S_TO_S = 0x0C71
+cdef int GL_PIXEL_MAP_I_TO_I = 0x0C70
+cdef int GL_PIXEL_MAP_I_TO_R = 0x0C72
+cdef int GL_PIXEL_MAP_I_TO_G = 0x0C73
+cdef int GL_PIXEL_MAP_I_TO_B = 0x0C74
+cdef int GL_PIXEL_MAP_I_TO_A = 0x0C75
+cdef int GL_PIXEL_MAP_R_TO_R = 0x0C76
+cdef int GL_PIXEL_MAP_G_TO_G = 0x0C77
+cdef int GL_PIXEL_MAP_B_TO_B = 0x0C78
+cdef int GL_PIXEL_MAP_A_TO_A = 0x0C79
+cdef int GL_PACK_ALIGNMENT = 0x0D05
+cdef int GL_PACK_LSB_FIRST = 0x0D01
+cdef int GL_PACK_ROW_LENGTH = 0x0D02
+cdef int GL_PACK_SKIP_PIXELS = 0x0D04
+cdef int GL_PACK_SKIP_ROWS = 0x0D03
+cdef int GL_PACK_SWAP_BYTES = 0x0D00
+cdef int GL_UNPACK_ALIGNMENT = 0x0CF5
+cdef int GL_UNPACK_LSB_FIRST = 0x0CF1
+cdef int GL_UNPACK_ROW_LENGTH = 0x0CF2
+cdef int GL_UNPACK_SKIP_PIXELS = 0x0CF4
+cdef int GL_UNPACK_SKIP_ROWS = 0x0CF3
+cdef int GL_UNPACK_SWAP_BYTES = 0x0CF0
+cdef int GL_ZOOM_X = 0x0D16
+cdef int GL_ZOOM_Y = 0x0D17
+
+# Texture mapping 
+cdef int GL_TEXTURE_ENV = 0x2300
+cdef int GL_TEXTURE_ENV_MODE = 0x2200
+cdef int GL_TEXTURE_1D = 0x0DE0
+cdef int GL_TEXTURE_2D = 0x0DE1
+cdef int GL_TEXTURE_WRAP_S = 0x2802
+cdef int GL_TEXTURE_WRAP_T = 0x2803
+cdef int GL_TEXTURE_MAG_FILTER = 0x2800
+cdef int GL_TEXTURE_MIN_FILTER = 0x2801
+cdef int GL_TEXTURE_ENV_COLOR = 0x2201
+cdef int GL_TEXTURE_GEN_S = 0x0C60
+cdef int GL_TEXTURE_GEN_T = 0x0C61
+cdef int GL_TEXTURE_GEN_MODE = 0x2500
+cdef int GL_TEXTURE_BORDER_COLOR = 0x1004
+cdef int GL_TEXTURE_WIDTH = 0x1000
+cdef int GL_TEXTURE_HEIGHT = 0x1001
+cdef int GL_TEXTURE_BORDER = 0x1005
+cdef int GL_TEXTURE_COMPONENTS = 0x1003
+cdef int GL_TEXTURE_RED_SIZE = 0x805C
+cdef int GL_TEXTURE_GREEN_SIZE = 0x805D
+cdef int GL_TEXTURE_BLUE_SIZE = 0x805E
+cdef int GL_TEXTURE_ALPHA_SIZE = 0x805F
+cdef int GL_TEXTURE_LUMINANCE_SIZE = 0x8060
+cdef int GL_TEXTURE_INTENSITY_SIZE = 0x8061
+cdef int GL_NEAREST_MIPMAP_NEAREST = 0x2700
+cdef int GL_NEAREST_MIPMAP_LINEAR = 0x2702
+cdef int GL_LINEAR_MIPMAP_NEAREST = 0x2701
+cdef int GL_LINEAR_MIPMAP_LINEAR = 0x2703
+cdef int GL_OBJECT_LINEAR = 0x2401
+cdef int GL_OBJECT_PLANE = 0x2501
+cdef int GL_EYE_LINEAR = 0x2400
+cdef int GL_EYE_PLANE = 0x2502
+cdef int GL_SPHERE_MAP = 0x2402
+cdef int GL_DECAL = 0x2101
+cdef int GL_MODULATE = 0x2100
+cdef int GL_NEAREST = 0x2600
+cdef int GL_REPEAT = 0x2901
+cdef int GL_CLAMP = 0x2900
+cdef int GL_S = 0x2000
+cdef int GL_T = 0x2001
+cdef int GL_R = 0x2002
+cdef int GL_Q = 0x2003
+cdef int GL_TEXTURE_GEN_R = 0x0C62
+cdef int GL_TEXTURE_GEN_Q = 0x0C63
+
+# Utility 
+cdef int GL_VENDOR = 0x1F00
+cdef int GL_RENDERER = 0x1F01
+cdef int GL_VERSION = 0x1F02
+cdef int GL_EXTENSIONS = 0x1F03
+
+# Errors 
+cdef int GL_NO_ERROR  = 0x0
+cdef int GL_INVALID_ENUM = 0x0500
+cdef int GL_INVALID_VALUE = 0x0501
+cdef int GL_INVALID_OPERATION = 0x0502
+cdef int GL_STACK_OVERFLOW = 0x0503
+cdef int GL_STACK_UNDERFLOW = 0x0504
+cdef int GL_OUT_OF_MEMORY = 0x0505
+
+# glPush/PopAttrib bits 
+cdef int GL_CURRENT_BIT = 0x00000001
+cdef int GL_POINT_BIT = 0x00000002
+cdef int GL_LINE_BIT = 0x00000004
+cdef int GL_POLYGON_BIT = 0x00000008
+cdef int GL_POLYGON_STIPPLE_BIT = 0x00000010
+cdef int GL_PIXEL_MODE_BIT = 0x00000020
+cdef int GL_LIGHTING_BIT = 0x00000040
+cdef int GL_FOG_BIT = 0x00000080
+cdef int GL_DEPTH_BUFFER_BIT = 0x00000100
+cdef int GL_ACCUM_BUFFER_BIT = 0x00000200
+cdef int GL_STENCIL_BUFFER_BIT = 0x00000400
+cdef int GL_VIEWPORT_BIT = 0x00000800
+cdef int GL_TRANSFORM_BIT = 0x00001000
+cdef int GL_ENABLE_BIT = 0x00002000
+cdef int GL_COLOR_BUFFER_BIT = 0x00004000
+cdef int GL_HINT_BIT = 0x00008000
+cdef int GL_EVAL_BIT = 0x00010000
+cdef int GL_LIST_BIT = 0x00020000
+cdef int GL_TEXTURE_BIT = 0x00040000
+cdef int GL_SCISSOR_BIT = 0x00080000
+cdef int GL_ALL_ATTRIB_BITS = 0x000FFFFF
+
+
+# OpenGL 1.1 
+cdef int GL_PROXY_TEXTURE_1D = 0x8063
+cdef int GL_PROXY_TEXTURE_2D = 0x8064
+cdef int GL_TEXTURE_PRIORITY = 0x8066
+cdef int GL_TEXTURE_RESIDENT = 0x8067
+cdef int GL_TEXTURE_BINDING_1D = 0x8068
+cdef int GL_TEXTURE_BINDING_2D = 0x8069
+cdef int GL_TEXTURE_INTERNAL_FORMAT = 0x1003
+cdef int GL_ALPHA4 = 0x803B
+cdef int GL_ALPHA8 = 0x803C
+cdef int GL_ALPHA12 = 0x803D
+cdef int GL_ALPHA16 = 0x803E
+cdef int GL_LUMINANCE4 = 0x803F
+cdef int GL_LUMINANCE8 = 0x8040
+cdef int GL_LUMINANCE12 = 0x8041
+cdef int GL_LUMINANCE16 = 0x8042
+cdef int GL_LUMINANCE4_ALPHA4 = 0x8043
+cdef int GL_LUMINANCE6_ALPHA2 = 0x8044
+cdef int GL_LUMINANCE8_ALPHA8 = 0x8045
+cdef int GL_LUMINANCE12_ALPHA4 = 0x8046
+cdef int GL_LUMINANCE12_ALPHA12 = 0x8047
+cdef int GL_LUMINANCE16_ALPHA16 = 0x8048
+cdef int GL_INTENSITY = 0x8049
+cdef int GL_INTENSITY4 = 0x804A
+cdef int GL_INTENSITY8 = 0x804B
+cdef int GL_INTENSITY12 = 0x804C
+cdef int GL_INTENSITY16 = 0x804D
+cdef int GL_R3_G3_B2 = 0x2A10
+cdef int GL_RGB4 = 0x804F
+cdef int GL_RGB5 = 0x8050
+cdef int GL_RGB8 = 0x8051
+cdef int GL_RGB10 = 0x8052
+cdef int GL_RGB12 = 0x8053
+cdef int GL_RGB16 = 0x8054
+cdef int GL_RGBA2 = 0x8055
+cdef int GL_RGBA4 = 0x8056
+cdef int GL_RGB5_A1 = 0x8057
+cdef int GL_RGBA8 = 0x8058
+cdef int GL_RGB10_A2 = 0x8059
+cdef int GL_RGBA12 = 0x805A
+cdef int GL_RGBA16 = 0x805B
+cdef int GL_CLIENT_PIXEL_STORE_BIT = 0x00000001
+cdef int GL_CLIENT_VERTEX_ARRAY_BIT = 0x00000002
+cdef int GL_ALL_CLIENT_ATTRIB_BITS  = 0xFFFFFFFF
+cdef int GL_CLIENT_ALL_ATTRIB_BITS  = 0xFFFFFFFF
+
 
