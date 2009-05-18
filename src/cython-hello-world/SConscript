@@ -4,9 +4,10 @@ import os
 import re
 import sys
 
-env = Environment()
-env.ParseConfig('python3-config --includes')
-env.ParseConfig('python3-config --libs')
+env = Environment(ENV=os.environ)
+env.ParseConfig('python3.0-config --includes')
+env.ParseConfig('python3.0-config --libs')
+env.ParseConfig('python3.0-config --ldflags')
 env['SHLIBPREFIX']=''
 
 # adding Cython builder
