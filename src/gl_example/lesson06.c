@@ -242,7 +242,8 @@ int initGL( GLvoid )
     glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
 
 	/* Vertex Arrays */
-	glEnableClientState( GL_VERTEX_ARRAY | GL_TEXTURE_COORD_ARRAY );
+	glEnableClientState( GL_VERTEX_ARRAY );
+	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
     return( TRUE );
 }
