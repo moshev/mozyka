@@ -19,7 +19,7 @@ else:
 cython_builder = Builder(action='%s -o $TARGET $SOURCE' % cython_executable)
 env.Append(BUILDERS={'Cython': cython_builder})
 
-extensions = [Extension("helloworld", ["helloworld.pyx"], libraries='-lSDL'),]
+extensions = [Extension("video", ["video.pyx"], libraries='-lSDL -lgl'),]
 
 for e in extensions:
     envx = env.Clone()
