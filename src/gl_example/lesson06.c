@@ -41,7 +41,7 @@ struct texpoint {
 
 struct texpoint cube[] = {
       /* NOTE:
-       *   The x coordinates of the glTexCoord2f function need to inverted
+       * The x coordinates of the glTexCoord2f function need to inverted
        * for SDL because of the way SDL_LoadBmp loads the data. So where
        * in the tutorial it has glTexCoord2f( 1.0f, 0.0f ); it should
        * now read glTexCoord2f( 0.0f, 0.0f );
@@ -112,9 +112,6 @@ void Quit( int returnCode )
 {
     /* clean up the window */
     SDL_Quit( );
-
-    /* and exit appropriately */
-    exit( returnCode );
 }
 
 /* function to load in bitmap as a GL texture */
@@ -275,10 +272,12 @@ int drawGLScene( GLvoid )
 	error = glGetError();
 	if ( error != GL_NONE )
 		printf( "VP: %s", gluErrorString(error) );
+
 	glTexCoordPointer( 2, GL_FLOAT, sizeof(cube[0]), &cube[0].tex[0] );
 	error = glGetError();
 	if ( error != GL_NONE )
 		printf( "TP: %s", gluErrorString(error) );
+
 	glDrawArrays( GL_QUADS, 0, sizeof(cube)/sizeof(cube[0]) );
 	error = glGetError();
 	if ( error != GL_NONE )
@@ -421,9 +420,5 @@ int main( int argc, char **argv )
 		drawGLScene( );
 	}
 
-    /* clean ourselves up and exit */
-    Quit( 0 );
-
-    /* Should never get here */
-    return( 0 );
+    return 0;
 }
