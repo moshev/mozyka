@@ -18,7 +18,7 @@ else:
     cython_executable = 'cython'
 cython_builder = Builder(action='%s -o $TARGET $SOURCE' % cython_executable)
 env.Append(BUILDERS={'Cython': cython_builder})
-extensions = [Extension("plum.klump", ["klump/klump.pyx"], libraries=['-lSDL', '-lGL']),]
+extensions = [Extension("plum.klump", ["plum/klump.pyx"], libraries=['-lSDL', '-lGL']),]
 lib_objects = {}
 
 for e in extensions:
