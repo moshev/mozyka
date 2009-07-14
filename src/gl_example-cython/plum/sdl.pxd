@@ -166,7 +166,7 @@ cdef extern from "SDL/SDL.h":
         SDL_QUITMASK
         SDL_SYSWMEVENTMASK
 
-    enum SDL_keysym:
+    enum SDLKey:
         # The keyboard syms have been cleverly chosen to map to ASCII
         SDLK_UNKNOWN
         SDLK_FIRST
@@ -400,10 +400,10 @@ cdef extern from "SDL/SDL.h":
         SDLK_LALT
         SDLK_RMETA
         SDLK_LMETA
-        SDLK_LSUPER= 311,# Left "Windows" key
-        SDLK_RSUPER= 312,# Right "Windows" key
-        SDLK_MODE= 313,# "Alt Gr" key
-        SDLK_COMPOSE= 314,# Multi-key compose key
+        SDLK_LSUPER # Left "Windows" key
+        SDLK_RSUPER # Right "Windows" key
+        SDLK_MODE # "Alt Gr" key
+        SDLK_COMPOSE # Multi-key compose key
 
         # Miscellaneous function keys
         SDLK_HELP
@@ -411,9 +411,9 @@ cdef extern from "SDL/SDL.h":
         SDLK_SYSREQ
         SDLK_BREAK
         SDLK_MENU
-        SDLK_POWER= 320,# Power Macintosh power key
-        SDLK_EURO= 321,# Some european keyboards
-        SDLK_UNDO= 322,# Atari keyboard has Undo
+        SDLK_POWER # Power Macintosh power key
+        SDLK_EURO # Some european keyboards
+        SDLK_UNDO # Atari keyboard has Undo
 
         SDLK_LAST
 
@@ -437,6 +437,11 @@ cdef extern from "SDL/SDL.h":
         KMOD_ALT
         KMOD_META
 
+    struct SDL_keysym:
+        Uint8 scancode
+        SDLKey sym
+        SDLMod mod
+        Uint16 unicode
 
     struct SDL_ActiveEvent:
         Uint8 type
@@ -445,7 +450,6 @@ cdef extern from "SDL/SDL.h":
 
     struct SDL_KeyboardEvent:
         Uint8 type
-        Uint8 which
         Uint8 state
         SDL_keysym keysym
 
