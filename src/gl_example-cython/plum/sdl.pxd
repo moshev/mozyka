@@ -145,6 +145,8 @@ cdef extern from "SDL/SDL.h":
         SDL_EVENT_RESERVED7
         SDL_USEREVENT
         SDL_NUMEVENTS
+        SDL_PRESSED
+        SDL_RELEASED
 
     enum:
         SDL_ACTIVEEVENTMASK
@@ -455,7 +457,6 @@ cdef extern from "SDL/SDL.h":
 
     struct SDL_MouseMotionEvent:
         Uint8 type
-        Uint8 which
         Uint8 state
         Uint16 x, y
         Sint16 xrel
@@ -463,33 +464,28 @@ cdef extern from "SDL/SDL.h":
 
     struct SDL_MouseButtonEvent:
         Uint8 type
-        Uint8 which
         Uint8 button
         Uint8 state
         Uint16 x, y
 
     struct SDL_JoyAxisEvent:
         Uint8 type
-        Uint8 which
         Uint8 axis
         Sint16 value
 
     struct SDL_JoyBallEvent:
         Uint8 type
-        Uint8 which
         Uint8 ball
         Sint16 xrel
         Sint16 yrel
 
     struct SDL_JoyHatEvent:
         Uint8 type
-        Uint8 which
         Uint8 hat
         Uint8 value
 
     struct SDL_JoyButtonEvent:
         Uint8 type
-        Uint8 which
         Uint8 button
         Uint8 state
 
@@ -874,5 +870,6 @@ cdef extern from "SDL/SDL.h":
     SDL_GrabMode SDL_WM_GrabInput(SDL_GrabMode mode)
     int SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect)
     SDL_version * SDL_Linked_Version()
+    Uint8 SDL_BUTTON(int which)
     # Functions }}}
 

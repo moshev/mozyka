@@ -1,0 +1,9 @@
+Make key bindings reassignable - by changing the key property of the handler
+Make key bindings removable
+
+Wrap OpenGL:
+  GL class
+  can set lighting
+  can set/get projection matrix and inverse
+  can render a bunch of triangles by vertex arrays
+

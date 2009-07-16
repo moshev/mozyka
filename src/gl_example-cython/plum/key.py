@@ -268,29 +268,25 @@ MOD_CTRL = klump.KMOD_CTRL
 MOD_SHIFT = klump.KMOD_SHIFT
 MOD_ALT = klump.KMOD_ALT
 MOD_META = klump.KMOD_META
+PRESSED = klump.SDL_PRESSED
+RELEASED = klump.SDL_RELEASED
 # }}} List of codes
 
 keyname = {code: name for name, code in locals().items() if name.startswith('KEY_')}
+handlers = {code: [] for code in keyname.keys()}
 
-class Handler:
-    handlers = {code: [] for code in keyname.keys()}
-    def __init__(self, key, action):
-        '''
-        key is one of the above keycodes
-        action is a chandlersable object that takes no arguments
-        '''
-        self._key = key
-        self._action = action
-        Handler.handlers[key].append(self)
+def invoke_handlers(key, state):
+    for handler in reversed(handlers[key]):
+        handler(state)
 
-    def __call__(self):
-        '''
-        Chandlerss the associated action
-        '''
-        self._action()
+def handler(key, action):
+    '''
+    key is one of the above keycodes
+    action is a callable, taking one argument - the key state (key.PRESSED or key.RELEASED)
+    '''
+    handlers[key].append(action)
 
-    def invoke_handlers(key):
-        for handler in reversed(Handler.handlers[key]):
-            handler()
-
+def process_event(event):
+    '''event - a klump.KeyEvent event'''
+    invoke_handlers(event.code, event.state)
 

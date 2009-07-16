@@ -1,6 +1,6 @@
 from . import klump
 from .klump import init, quit
-from . import key
+from . import key, mouse
 
 def init_main_window(width, height, title, icon):
     """
@@ -17,9 +17,11 @@ def main_loop():
     while True:
         event = klump.wait_for_next_event()
         if isinstance(event, klump.KeyEvent):
-            key.Handler.invoke_handlers(event.code)
-        elif isinstance(event, klump.UnsupportedEvent):
-            print("Unsupported Event ", event.type)
+            key.process_event(event)
+        elif isinstance(event, (klump.MouseButtonEvent, klump.MouseMotionEvent)):
+            mouse.process_event(event)
         elif isinstance(event, klump.QuitEvent):
             break
+        else:
+            print("Unsupported Event ", event.type)
 

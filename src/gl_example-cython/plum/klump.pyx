@@ -1,4 +1,6 @@
+cimport gl
 cimport sdl
+from collections import namedtuple
 # Key codes {{{
 SDLK_UNKNOWN = sdl.SDLK_UNKNOWN
 SDLK_FIRST = sdl.SDLK_FIRST
@@ -267,28 +269,34 @@ KMOD_CTRL = sdl.KMOD_CTRL
 KMOD_SHIFT = sdl.KMOD_SHIFT
 KMOD_ALT = sdl.KMOD_ALT
 KMOD_META = sdl.KMOD_META
+
+SDL_PRESSED = sdl.SDL_PRESSED
+SDL_RELEASED = sdl.SDL_RELEASED
 # }}} Key codes
 
 cdef class Surface:
     cdef sdl.SDL_Surface* sdl_surface
 
-cdef class KeyEvent:
-    cdef readonly int code
-    cdef readonly int modifier
-    cdef readonly int unicode
-    def __init__(self, code, modifier, unicode):
-        self.code = code
-        self.modifier = modifier
-        self.unicode = unicode
+# state is SDL_PRESSED or SDL_RELEASED.
+# code is one of SDLK_*
+# modifier is a bitmask of held KMOD_*
+# unicode is unicode value of the registered character
+KeyEvent = namedtuple(u'KeyEvent', u'state code modifier unicode')
 
+# buttons is a set of numbers from 1 through 8, indicating which buttons are held
+# x and y are absolute coords,
+# xrel and yrel are deltas, relative to the previous position
+MouseMotionEvent = namedtuple(u'MouseMotionEvent', u'buttons x y xrel yrel')
 
-cdef class QuitEvent:
+# state is SDL_PRESSED or SDL_RELEASED
+# button is an integer from 1 through 8
+# x and y are absolute coordinates of the pointer
+MouseButtonEvent = namedtuple(u'MouseButtonEvent', u'state button x y')
+
+class QuitEvent:
     pass
 
-cdef class UnsupportedEvent:
-    cdef readonly int type
-    def __init__(self, type):
-        self.type = type
+UnsupportedEvent = namedtuple(u'UnsupportedEvent', u'type')
 
 def init():
     """Call this function to initialize the graphics and audio systems."""
@@ -325,9 +333,19 @@ def wait_for_next_event():
     returns None on error
     """
     cdef sdl.SDL_Event event
+    cdef int i
     if sdl.SDL_WaitEvent(&event) == 1:
-        if event.type == sdl.SDL_KEYDOWN:
-            return KeyEvent(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.unicode)
+        if event.type == sdl.SDL_KEYDOWN or event.type == sdl.SDL_KEYUP:
+            return KeyEvent(event.key.state, event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.unicode)
+        elif event.type == sdl.SDL_MOUSEMOTION:
+            buttons = set()
+            for i in range(1, 9):
+                if event.motion.state & sdl.SDL_BUTTON(i):
+                    buttons.add(i)
+            return MouseMotionEvent(buttons, event.motion.x, event.motion.y,
+                    event.motion.xrel, event.motion.yrel)
+        elif event.type == sdl.SDL_MOUSEBUTTONDOWN or event.type == sdl.SDL_MOUSEBUTTONUP:
+            return MouseButtonEvent(event.button.state, event.button.button, event.button.x, event.button.y)
         elif event.type == sdl.SDL_QUIT:
             return QuitEvent()
         else:
