@@ -1,2 +1,2 @@
-SConscript(['src/cython-hello-world/SConscript',])
+SConscript(['src/SConscript',])
 
