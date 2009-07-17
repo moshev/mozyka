@@ -353,3 +353,6 @@ def wait_for_next_event():
     else:
         return None
 
+class GL:
+    
+
