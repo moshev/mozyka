@@ -1,4 +1,4 @@
-from data_model import *
+from geometry import *
 from math import *
 import unittest
 
@@ -61,7 +61,7 @@ def suite():
     return suite
 
 
-if __name__ == 'unit_tests':
+if __name__ == '__main__':
     suiteFew = unittest.TestSuite()
 
     suiteFew.addTest(DataModelTest("test_vector"))
