@@ -8,11 +8,11 @@ class DataModelTest(unittest.TestCase):
         b = Vector(0,0,0)
         self.assertTrue(a==b)
         self.assertEqual(Vector(0,3,4).normalize(),Vector(0,3/5,4/5))
-        self.assertEqual(a.dist(Vector(3,0,0)),3)
+        self.assertEqual(a.distance(Vector(3,0,0)),3)
 
     def test_line(self):
         line = Line(Vector(0,0,0),Vector(5,5,0))
-        self.assertTrue(line.belong(Vector(3,3,0)))
+        self.assertTrue(line.contains(Vector(3,3,0)))
         line2 = Line(Vector(2,0,0),Vector(0,2,0))
         self.assertEqual(line.intersection(line2),Vector(1,1,0))
         line3 = Line(Vector(1,1,0),Vector(2,2,0))
@@ -22,13 +22,13 @@ class DataModelTest(unittest.TestCase):
 
     def test_ray(self):
         ray = Ray(Vector(0,0,0),Vector(5,5,0))
-        self.assertTrue(ray.belong(Vector(3,3,0)))
-        self.assertFalse(ray.belong(Vector(-1,-1,0)))
+        self.assertTrue(ray.contains(Vector(3,3,0)))
+        self.assertFalse(ray.contains(Vector(-1,-1,0)))
 
     def test_edge(self):
         edge = Edge(Vector(0,0,0),Vector(5,5,0))
-        self.assertTrue(edge.belong(Vector(3,3,0)))
-        self.assertFalse(edge.belong(Vector(-1,-1,0)))
+        self.assertTrue(edge.contains(Vector(3,3,0)))
+        self.assertFalse(edge.contains(Vector(-1,-1,0)))
         line = Line(Vector(2,0,0),Vector(3,-1,0))
         ray = Ray(Vector(2,0,0),Vector(3,-1,0))
         self.assertEqual(edge.intersection(line),Vector(1,1,0))

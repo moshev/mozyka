@@ -1,4 +1,4 @@
-from math import *
+import math
 import copy
 epsilon = 0.0001
 
@@ -13,10 +13,8 @@ class Vector:
             self.z=args[2]
 
     def __eq__(self,other):
-        if self is None:
-            return other is None
         if other is None:
-            return self is None
+            return False
         return abs(self.x - other.x)<epsilon and abs(self.y - other.y)<epsilon and abs(self.z - other.z)<epsilon
 
     def __add__(self,other):
@@ -38,10 +36,11 @@ class Vector:
         return "Vector({0},{1},{2})".format(self.x,self.y,self.z)
 
     def length(self):
-        return sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+        return math.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
 
     def cross(self, other):
-        return Vector(self.y * other.z - self.z * other.y, self.z * other.x - self.x * other.z, self.x * other.y - self.y * other.x)
+        return Vector(self.y * other.z - self.z * other.y,
+                self.z * other.x - self.x * other.z, self.x * other.y - self.y * other.x)
 
     def distance(self,other):
         return (self-other).length()
@@ -56,7 +55,7 @@ class Vector:
         else:
             return self*(1/self.length())
 
-    def cotangent(self, other):
+    def colinear(self, other):
         return self.cross(other).length() < epsilon
 
 """Line created from 2 points"""
@@ -69,10 +68,10 @@ class Line:
     def __eq__(self,other):
         if other is None:
             return 0
-        return self.contains(other.point) and self.tangent.cotangent(other.tangent)
+        return self.contains(other.point) and self.tangent.colinear(other.tangent)
 
     def distance(self, point):
-        l = (self.point * self.tangent)/(self.tangent * self.tangent)
+        l = (point - self.point) * self.tangent
         return point.distance(self.point + l * self.tangent)
 
     def contains(self,point):
@@ -81,6 +80,11 @@ class Line:
     def point(self,t):
         return Vector(self.x0 + self.a*t,self.y0 + self.b*t,self.z0 + self.c*t)
 
+    def colinear(self, other):
+        if isinstance(other, Line):
+            return self.tangent.colinear(other.tangent)
+        elif isinstance(other, Vector):
+            return self.tangent.colinear(other)
 
     def intersection(self,other):
         """Intersection of 2 lines
@@ -90,74 +94,14 @@ class Line:
         if self == other:
             return self
 
-        normal = self.tangent.cross(other.tangent)
-        if normal == Vector():
-            return None
-        p = Plane(normal, self.point)
-        if not p.contains(other):
+        if self.colinear(other):
             return None
 
-        if self.a != 0:
-            denominator = self.a*other.b - self.b*other.a
-            if denominator !=0:
-                t2 = (self.a*(self.y0 - other.y0) + self.b*(other.x0 - self.x0))/denominator
-                t1 = (other.x0 -self.x0 + other.a*t2)/self.a
-                if self.point(t1) == other.point(t2):
-                    return self.point(t1)
-                else:
-                    return None
-
-            denominator = self.a*other.c - self.c*other.a
-            if denominator !=0:
-                t2 = (self.a*(self.z0 - other.z0) + self.c*(other.x0 - self.x0))/denominator
-                t1 = (other.x0 -self.x0 + other.a*t2)/self.a
-                if self.point(t1) == other.point(t2):
-                    return self.point(t1)
-                else:
-                    return None
+        x = other.point + self.distance(other.point) * (self.tangent * other.tangent) * other.tangent
+        if self.contains(x):
+            return x
+        else:
             return None
-
-        if self.b != 0:
-            denominator = other.a
-            if denominator !=0:
-                t2 = (self.x0 - other.x0)/denominator
-                t1 = (other.y0 -self.y0 + other.b*t2)/self.b
-                if self.point(t1) == other.point(t2):
-                    return self.point(t1)
-                else:
-                    return None
-
-            denominator = self.b*other.c - self.c*other.b
-            if denominator !=0:
-                t2 = (self.b*(self.z0 - other.z0) + self.c*(other.y0 - self.y0))/denominator
-                t1 = (other.y0 -self.y0 + other.b*t2)/self.b
-                if self.point(t1) == other.point(t2):
-                    return self.point(t1)
-                else:
-                    return None
-            return None
-
-        if self.c != 0:
-            denominator = other.a
-            if denominator !=0:
-                t2 = (self.x0 - other.x0)/denominator
-                t1 = (other.x0 -self.x0 + other.a*t2)/self.c
-                if self.point(t1) == other.point(t2):
-                    return self.point(t1)
-                else:
-                    return None
-
-            denominator = other.b
-            if denominator !=0:
-                t2 = (self.y0 - other.y0)/denominator
-                t1 = (other.x0 -self.x0 + other.a*t2)/self.c
-                if self.point(t1) == other.point(t2):
-                    return self.point(t1)
-                else:
-                    return None
-            return None
-
-        return other.contains(self.point(0)) 
 
 class Plane:
     def __init__(self, normal, point):
@@ -212,7 +156,8 @@ class Edge:
         return Line(self.vertex1,self.vertex2)
 
     def contains(self,point):
-        return self.line().contains(point) and (self.vertex1.x - point.x)*(point.x - self.vertex2.x) >= 0 and (self.vertex1.y - point.y)*(point.y - self.vertex2.y) >= 0 and (self.vertex1.z - point.z)*(point.z - self.vertex2.z) >= 0
+        factor = (point - self.vertex1).length() / (self.vertex2 - self.vertex1).length()
+        return (0 <= factor <= 1) and ((1 - factor) * self.vertex1 + factor * self.vertex2) == point
 
     """Intersection of the edge and line or ray"""
     def intersection(self, line):
@@ -260,12 +205,12 @@ class Triangle:
         for i in intersect.keys():
             if not(intersect[i] is None):
                 if isinstance(intersect[i],Vector):
-                    curr_dist = intersect[i].dist(ray.start)
+                    curr_dist = intersect[i].distance(ray.start)
                 else:
-                    if intersect[i].vertex1.dist(ray.start) > intersect[i].vertex2.dist(ray.start):
-                        curr_dist = intersect[i].vertex2.dist(ray.start)
+                    if intersect[i].vertex1.distance(ray.start) > intersect[i].vertex2.distance(ray.start):
+                        curr_dist = intersect[i].vertex2.distance(ray.start)
                     else:
-                        curr_dist = intersect[i].vertex1.dist(ray.start)
+                        curr_dist = intersect[i].vertex1.distance(ray.start)
 
                 if curr_dist != None and (dist == None or dist > curr_dist):
                     dist = curr_dist
