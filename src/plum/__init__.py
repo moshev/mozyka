@@ -1,3 +1,3 @@
-from .generic import init, quit, init_main_window, main_loop
-from . import key
+from .klump import init, quit
+from .interface import init_screen, keycode, keyname, keystate
 
