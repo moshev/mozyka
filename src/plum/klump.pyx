@@ -420,8 +420,6 @@ class GL:
         gl.glClear(gl.GL_COLOR_BUFFER_BIT, gl.GL_DEPTH_BUFFER_BIT)
 
     def render_triangles(self, vertices, normals):
-        cdef double[int, mode='c'] c_vertices = vertices
-        cdef double[int, mode='c'] c_normals = normals
         gl.glVertexPointer(3, gl.GL_DOUBLE, 0, c_vertices)
         gl.glNormalPointer(gl.GL_DOUBLE, 0, c_normals)
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(c_vertices))
