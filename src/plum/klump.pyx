@@ -1,6 +1,7 @@
 cimport gl
 cimport sdl
-from collections import namedtuple
+cimport cmath
+from collections import namedtuple, array
 # Key codes {{{
 SDLK_UNKNOWN = sdl.SDLK_UNKNOWN
 SDLK_FIRST = sdl.SDLK_FIRST
@@ -311,6 +312,7 @@ def set_video_params(width, height, title, icon):
     width and height are ints
     title and icon are bytes - utf-8 encoded strings. To convert a string to bytes, use str.encode("utf-8")
     """
+    sdl.SDL_GL_SetAttribute(sdl.SDL_GL_DOUBLEBUFFER, 1)
     cdef sdl.SDL_Surface* sdl_surface = sdl.SDL_SetVideoMode(width, height, 32, sdl.SDL_OPENGL)
     sdl.SDL_WM_SetCaption(title, icon)
     cdef Surface s = Surface()
@@ -353,3 +355,74 @@ def wait_for_next_event():
     else:
         return None
 
+cdef class Camera:
+    # transform matrix from global coords to plane coords
+    cdef public double distance
+    # distance from point to plane
+    cdef public double perspective[16]
+
+class GL:
+    ''' Handles initializing and passing data to the system libGL '''
+    def __init__(self, width, height):
+        '''width and height - window size in pixels'''
+        self.width, self.height = width, height
+
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glShadeModel(gl.GL_SMOOTH)
+        gl.glClearColor(0.0, 0.0, 0.0, 0.5)
+        gl.glClearDepth(1.0)
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glDepthFunc(gl.GL_LEQUAL)
+        gl.glHint(gl.GL_PERSPECTIVE_CORRECTION_HINT, gl.GL_NICEST)
+        gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        gl.glEnableClientState(gl.GL_NORMAL_ARRAY)
+        gl.glEnable(gl.GL_LIGHTING)
+        gl.glEnable(gl.GL_LIGHT0)
+        cdef float light_colour[3]
+        light_colour[0] = 1
+        light_colour[1] = 1
+        light_colour[2] = 1
+        cdef float light_position[4]
+        light_position[0] = -1
+        light_position[1] = -1
+        light_position[2] = 1
+        light_position[3] = 0
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, &light_colour[0])
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, &light_position[0])
+
+        # compute the default camera
+        cdef Camera c
+        cdef int i
+        for i in range(16):
+            if i % 4 == 0:
+                c.perspective[i] = 1
+            else:
+                c.perspective[i] = 0
+        c.distance = 1
+        self.camera = c
+        self.set_viewport(width, height)
+
+    def set_viewport(self, width, height):
+        '''width, height - window's width and height in pixels
+        Initializes the viewport, so that the screen fits a rectangle with
+        sides 2, centred at (0,0)'''
+        gl.glViewport(0, 0, width, height)
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
+
+        cdef Camera c = self.camera
+        gl.glFrustum(-1, 1, -1, 1, c.distance, c.distance+1)
+        gl.glMultMatrixd(&c.perspective[0])
+
+    def begin_scene(self):
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        gl.glLoadIdentity()
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT, gl.GL_DEPTH_BUFFER_BIT)
+
+    def render_triangles(self, vertices, normals):
+        gl.glVertexPointer(3, gl.GL_DOUBLE, 0, c_vertices)
+        gl.glNormalPointer(gl.GL_DOUBLE, 0, c_normals)
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(c_vertices))
+
+    def end_scene(self):
+        sdl.SDL_GL_SwapBuffers()
