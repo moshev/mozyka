@@ -1,4 +1,5 @@
 from math import *
+import copy
 epsilon = 0.0001
 
 """3-dimensional vector with coordinates"""
@@ -26,7 +27,7 @@ class Vector:
 
     def __mul__(self,other):
         if isinstance(other,Vector):
-            return Vector(self.y * other.z - self.z * other.y, self.z * other.x - self.x * other.z, self.x * other.y - self.y * other.x)
+            return self.x * other.x + self.y * other.y + self.z * other.z
         else:
             return Vector(self.x * other, self.y * other, self.z * other)
 
@@ -36,11 +37,14 @@ class Vector:
     def __str__(self):
         return "Vector({0},{1},{2})".format(self.x,self.y,self.z)
 
-    def dist(self,other):
-        x = self.x - other.x
-        y = self.y - other.y
-        z = self.z - other.z
-        return sqrt(x*x + y*y + z*z)
+    def length(self):
+        return sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+
+    def cross(self, other):
+        return Vector(self.y * other.z - self.z * other.y, self.z * other.x - self.x * other.z, self.x * other.y - self.y * other.x)
+
+    def distance(self,other):
+        return (self-other).length()
 
     def tuple(self):
         return (self.x,self.y,self.z)
@@ -50,37 +54,48 @@ class Vector:
         if self == Vector():
             return self
         else:
-            length = sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
-            return self*(1/length)
+            return self*(1/self.length())
+
+    def cotangent(self, other):
+        return self.cross(other).length() < epsilon
 
 """Line created from 2 points"""
 class Line:
     def __init__(self, point1, point2):
-        (self.x0,self.y0,self.z0) = point1.tuple()
-        (self.a,self.b,self.c) = (point2.x - self.x0,point2.y - self.y0,point2.z - self.z0)
+        self.point = copy.deepcopy(point1)
+        self.tangent = (point1 - point2)
+        self.tangent.normalize()
 
     def __eq__(self,other):
-        if other == None or self == None:
+        if other is None:
             return 0
-        return self.belong(other.point(0)) and self.belong(other.point(1))
+        return self.contains(other.point) and self.tangent.cotangent(other.tangent)
 
-    def belong(self,point):
-        if self.a != 0:
-            t = (point.x - self.x0)/self.a
-            return (point.y == self.y0 + self.b*t) and (point.z == self.z0 + self.c*t)
-        if (self.x0 == point.x) and (self.b != 0):
-            t = (point.y - self.y0)/self.b
-            return point.z == self.z0 + self.c*t
-        return point.y == self.y0
+    def distance(self, point):
+        l = (self.point * self.tangent)/(self.tangent * self.tangent)
+        return point.distance(self.point + l * self.tangent)
+
+    def contains(self,point):
+        return self.distance(point) < epsilon
 
     def point(self,t):
         return Vector(self.x0 + self.a*t,self.y0 + self.b*t,self.z0 + self.c*t)
 
 
-    """Intersection of 2 lines"""
     def intersection(self,other):
+        """Intersection of 2 lines
+        Returns self on equality,
+        None when they don't intersect
+        a Vector that is the intersection point otherwise"""
         if self == other:
             return self
+
+        normal = self.tangent.cross(other.tangent)
+        if normal == Vector():
+            return None
+        p = Plane(normal, self.point)
+        if not p.contains(other):
+            return None
 
         if self.a != 0:
             denominator = self.a*other.b - self.b*other.a
@@ -142,7 +157,20 @@ class Line:
                     return None
             return None
 
-        return other.belong(self.point(0)) 
+        return other.contains(self.point(0)) 
+
+class Plane:
+    def __init__(self, normal, point):
+        self.normal = normal
+        self.normal.normalize()
+        self.point = point
+        self.d = -(self.normal * self.point)
+
+    def contains(self, other):
+        if isinstance(other, Vector):
+            return abs (self.normal * other + self.d) < epsilon
+        elif isinstance(other, Line):
+            return self.contains(other.point) and abs(self.normal * other.tangent) < epsilon
 
 """Ray with start point and direction"""
 class Ray:
@@ -153,8 +181,8 @@ class Ray:
     def line(self):
         return Line(self.start,self.direction)
 
-    def belong(self,point):
-        return self.line().belong(point) and (point.x - self.start.x)*(self.direction.x - self.start.x) >= 0 and (point.y - self.start.y)*(self.direction.y - self.start.y) >= 0 and (point.z - self.start.z)*(self.direction.z - self.start.z) >= 0
+    def contains(self,point):
+        return self.line().contains(point) and (point.x - self.start.x)*(self.direction.x - self.start.x) >= 0 and (point.y - self.start.y)*(self.direction.y - self.start.y) >= 0 and (point.z - self.start.z)*(self.direction.z - self.start.z) >= 0
 
 
 """edge with 2 point and optional nextEdge"""
@@ -183,21 +211,21 @@ class Edge:
     def line(self):
         return Line(self.vertex1,self.vertex2)
 
-    def belong(self,point):
-        return self.line().belong(point) and (self.vertex1.x - point.x)*(point.x - self.vertex2.x) >= 0 and (self.vertex1.y - point.y)*(point.y - self.vertex2.y) >= 0 and (self.vertex1.z - point.z)*(point.z - self.vertex2.z) >= 0
+    def contains(self,point):
+        return self.line().contains(point) and (self.vertex1.x - point.x)*(point.x - self.vertex2.x) >= 0 and (self.vertex1.y - point.y)*(point.y - self.vertex2.y) >= 0 and (self.vertex1.z - point.z)*(point.z - self.vertex2.z) >= 0
 
     """Intersection of the edge and line or ray"""
     def intersection(self, line):
         if isinstance(line, Ray):
             intersect = self.intersection(line.line())
             if isinstance(intersect, Edge):
-                if line.belong(intersect.vertex1) and line.belong(intersect.vertex2):
+                if line.contains(intersect.vertex1) and line.contains(intersect.vertex2):
                     return intersect
-                if line.belong(intersect.vertex1):
+                if line.contains(intersect.vertex1):
                     return Edge(line.start,intersect.vertex1,intersect.nextEdge)
-                if line.belong(intersect.vertex2):
+                if line.contains(intersect.vertex2):
                     return Edge(line.start,intersect.vertex2,intersect.nextEdge)
-            if not(intersect is None) and line.belong(intersect):
+            if not(intersect is None) and line.contains(intersect):
                 return intersect
             else:
                 return None
@@ -206,7 +234,7 @@ class Edge:
             intersect = line.intersection(self.line())
             if isinstance(intersect,Line):
                 return self
-            if not(intersect is None) and self.belong(intersect):
+            if not(intersect is None) and self.contains(intersect):
                 return intersect
             else:
                 return None
@@ -221,7 +249,7 @@ class Triangle:
         'B' : Edge(vertexA,vertexC,self),
         'C' : Edge(vertexA,vertexB,self)}
 
-    """Intersection of the triangle and ray like a distence"""
+    """Intersection of the triangle and ray like a distance"""
     def intersection(self,ray):
         intersect = {}
         intersect['A'] = self.edge['A'].intersection(ray)

@@ -355,14 +355,16 @@ def wait_for_next_event():
     else:
         return None
 
-cdef class Camera:
-    # transform matrix from global coords to plane coords
-    cdef public double distance
+cdef struct Camera:
     # distance from point to plane
-    cdef public double perspective[16]
+    double distance
+    # transform matrix from global coords to plane coords
+    double perspective[16]
 
-class GL:
+cdef class GL:
     ''' Handles initializing and passing data to the system libGL '''
+    
+    cdef Camera camera
     def __init__(self, width, height):
         '''width and height - window size in pixels'''
         self.width, self.height = width, height
@@ -417,12 +419,13 @@ class GL:
     def begin_scene(self):
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT, gl.GL_DEPTH_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
     def render_triangles(self, vertices, normals):
-        gl.glVertexPointer(3, gl.GL_DOUBLE, 0, c_vertices)
-        gl.glNormalPointer(gl.GL_DOUBLE, 0, c_normals)
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(c_vertices))
+        pass
+        #gl.glVertexPointer(3, gl.GL_DOUBLE, 0, c_vertices)
+        #gl.glNormalPointer(gl.GL_DOUBLE, 0, c_normals)
+        #gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(c_vertices))
 
     def end_scene(self):
         sdl.SDL_GL_SwapBuffers()

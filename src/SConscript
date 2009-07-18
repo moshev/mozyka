@@ -30,6 +30,8 @@ for e in extensions:
         envx.AppendUnique(LIBS=e.libraries)
     if e.include_dirs:
         envx.AppendUnique(CPPPATH=e.include_dirs)
+    if e.extra_compile_args:
+        envx.AppendUnique(CCFLAGS=e.extra_compile_args)
     # looking for common src dir prefix
     sources = e.sources[:]
     build_dir = None
