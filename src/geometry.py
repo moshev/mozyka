@@ -1,12 +1,15 @@
 import math
 import copy
+from array import array
+from collections import defaultdict
 epsilon = 0.0001
 
 """3-dimensional vector with coordinates"""
 class Vector:
+    __slots__ = ('x', 'y', 'z')
     def __init__(self,*args):
         if args is ():
-            (self.x,self.y,self.z) = (0,0,0)
+            self.x,self.y,self.z = 0,0,0
         else:
             self.x=args[0]
             self.y=args[1]
@@ -17,11 +20,24 @@ class Vector:
             return False
         return abs(self.x - other.x)<epsilon and abs(self.y - other.y)<epsilon and abs(self.z - other.z)<epsilon
 
+    def __hash__(self):
+        return id(self)
+
     def __add__(self,other):
         return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
 
+    def __iadd__(self, other):
+        self.x += other.x
+        self.y += other.y
+        self.z += other.z
+
     def __sub__(self,other):
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __isub__(self, other):
+        self.x -= other.x
+        self.y -= other.y
+        self.z -= other.z
 
     def __mul__(self,other):
         if isinstance(other,Vector):
@@ -50,6 +66,9 @@ class Vector:
 
     def __str__(self):
         return "Vector({0},{1},{2})".format(self.x,self.y,self.z)
+
+    def __neg__(self):
+        return self * (-1)
 
     def length(self):
         return math.sqrt(self * self)
@@ -170,7 +189,9 @@ class Edge:
         return (self.vertex1,self.vertex2) == (other.vertex1,other.vertex2) or (self.vertex1,self.vertex2) == (other.vertex2,other.vertex1)
 
     def __str__(self):
-        return "Edge({0},{1})".format(self.vertex1,self.vertex2)
+        return "Edge({0}, {1})".format(self.vertex1,self.vertex2)
+
+    __repr__ = __str__
 
     def line(self):
         return Line(self.vertex1, self.vertex2)
@@ -213,7 +234,7 @@ class Triangle:
         'B' : vertexB,
         'C' : vertexC}
         self.edge = { 'A' : Edge(vertexB,vertexC,self),
-        'B' : Edge(vertexA,vertexC,self),
+        'B' : Edge(vertexC,vertexA,self),
         'C' : Edge(vertexA,vertexB,self)}
 
     """Intersection of the triangle and ray like a distance"""
@@ -240,29 +261,62 @@ class Triangle:
 
 class Model:
     def __init__(self,*args):
-        self.bag = ()
-        for triangle in args:
-            self.put(triangle)
+        self.dirty = True
+        self.faces = list()
+        self.put(args)
 
-    def put(self,triangle):
-        for tri in self.bag:
-            for edge1 in triangle.edge.values():
-                for edge2 in tri.edge.values():
-                    if edge1 == edge2:
-                        edge1.nextEdge = edge2
-                        edge2.nextEdge = edge1
-        self.bag = self.bag + (triangle,)
+    def put(self,triangles):
+        for triangle in triangles:
+            for face in self.faces:
+                for new_edge in triangle.edge.values():
+                    for own_edge in face.edge.values():
+                        for v in (own_edge.vertex1, own_edge.vertex2):
+                            if new_edge.vertex1 == v:
+                                new_edge.vertex1 = v
+                            if new_edge.vertex2 == v:
+                                new_edge.vertex2 = v
+                        if new_edge == own_edge:
+                            new_edge.nextEdge = own_edge
+                            own_edge.nextEdge = new_edge
+            self.faces.append(triangle)
+        self.dirty = True
 
     """returns the distance from ray.start to the model"""
     def intersection(self,ray):
         dist = None
-        for triangle in self.bag:
+        for triangle in self.faces:
             curr_dist = triangle.intersection(ray)
             if curr_dist != None and (dist == None or curr_dist<dist):
                 dist = curr_dist
         return dist
-            
-            
-        
-            
-    
+
+    def refill_arrays(self):
+        self.cached_vertices = array('d')
+        self.cached_normals = array('d')
+        nodes = defaultdict(Vector)
+        for face in self.faces:
+            print(face.edge)
+            nA = (face.edge['B'].vertex1 - face.edge['B'].vertex2).cross(face.edge['C'].vertex2 - face.edge['C'].vertex1).normal()
+            nB = (face.edge['C'].vertex1 - face.edge['C'].vertex2).cross(face.edge['A'].vertex2 - face.edge['A'].vertex1).normal()
+            nC = (face.edge['A'].vertex1 - face.edge['A'].vertex2).cross(face.edge['B'].vertex2 - face.edge['B'].vertex1).normal()
+            nodes[face.vertex['A']] += nA
+            nodes[face.vertex['B']] += nB
+            nodes[face.vertex['C']] += nC
+        for vector, normal in nodes:
+            normal.normalize()
+            self.cached_vertices.append(vector.x)
+            self.cached_vertices.append(vector.y)
+            self.cached_vertices.append(vector.z)
+            self.cached_normals.append(normal.x)
+            self.cached_normals.append(normal.y)
+            self.cached_normals.append(normal.z)
+        self.dirty = False
+
+    def arrays(self):
+        '''Returns a tuple (vertices, normals) of arrays of doubles,
+        each containing 9*T elements,
+        where T is the number of triangles in the model'''
+        if self.dirty:
+            self.refill_arrays()
+        return (self.cached_vertices, self.cached_normals)
+

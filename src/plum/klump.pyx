@@ -1,7 +1,9 @@
 cimport gl
 cimport sdl
+cimport stdlib
 cimport cmath
-from collections import namedtuple, array
+from python_buffer cimport *
+from collections import namedtuple
 # Key codes {{{
 SDLK_UNKNOWN = sdl.SDLK_UNKNOWN
 SDLK_FIRST = sdl.SDLK_FIRST
@@ -365,6 +367,7 @@ cdef class GL:
     ''' Handles initializing and passing data to the system libGL '''
     
     cdef Camera camera
+    cdef int width, height
     def __init__(self, width, height):
         '''width and height - window size in pixels'''
         self.width, self.height = width, height
@@ -422,10 +425,29 @@ cdef class GL:
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
     def render_triangles(self, vertices, normals):
-        pass
-        #gl.glVertexPointer(3, gl.GL_DOUBLE, 0, c_vertices)
-        #gl.glNormalPointer(gl.GL_DOUBLE, 0, c_normals)
-        #gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(c_vertices))
+        '''vertices and normals must be objects supporting the buffer protocol.
+        they are understood to contain 9*T doubles, where T is the number of triangles
+        to render.'''
+        cdef Py_buffer vertices_buffer, normals_buffer
+        cdef PyObject* c_vertices = <PyObject*>vertices
+        cdef PyObject* c_normals = <PyObject*>normals
+        if PyObject_CheckBuffer(c_vertices) == 0:
+            raise TypeError(vertices.__class__.__name__ + u"doesn't support the buffer protocol")
+        if PyObject_CheckBuffer(c_normals) == 0:
+            raise TypeError(normals.__class__.__name__ + u"doesn't support the buffer protocol")
+
+        if PyObject_GetBuffer(c_vertices, &vertices_buffer, PyBUF_STRIDES | PyBUF_ND) != 0:
+            raise Exception(u"Could not obtain a buffer from vertices")
+        if PyObject_GetBuffer(c_normals, &normals_buffer, PyBUF_STRIDES | PyBUF_ND) != 0:
+            PyBuffer_Release(&vertices_buffer)
+            raise Exception(u"Could not obtain a buffer from normals")
+
+        gl.glVertexPointer(3, gl.GL_DOUBLE, vertices_buffer.strides[0], vertices_buffer.buf)
+        gl.glNormalPointer(gl.GL_DOUBLE, normals_buffer.strides[0], normals_buffer.buf)
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, vertices_buffer.shape[0])
+
+        PyBuffer_Release(&vertices_buffer)
+        PyBuffer_Release(&normals_buffer)
 
     def end_scene(self):
         sdl.SDL_GL_SwapBuffers()
