@@ -7,7 +7,7 @@ class DataModelTest(unittest.TestCase):
         a = Vector()
         b = Vector(0,0,0)
         self.assertTrue(a==b)
-        self.assertEqual(Vector(0,3,4).normalize(),Vector(0,3/5,4/5))
+        self.assertEqual(Vector(0,3,4).normal(),Vector(0,3/5,4/5))
         self.assertEqual(a.distance(Vector(3,0,0)),3)
 
     def test_line(self):
@@ -31,6 +31,7 @@ class DataModelTest(unittest.TestCase):
         self.assertFalse(edge.contains(Vector(-1,-1,0)))
         line = Line(Vector(2,0,0),Vector(3,-1,0))
         ray = Ray(Vector(2,0,0),Vector(3,-1,0))
+        self.assertTrue(edge.contains(Vector(1,1,0)))
         self.assertEqual(edge.intersection(line),Vector(1,1,0))
         self.assertEqual(edge.intersection(ray),None)
         edge = Edge(Vector(2,2,0),Vector(3,3,0))

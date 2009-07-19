@@ -29,14 +29,30 @@ class Vector:
         else:
             return Vector(self.x * other, self.y * other, self.z * other)
 
+    def __imul__(self, other):
+        self.x *= other
+        self.y *= other
+        self.z *= other
+
+    def __truediv__(self, other):
+        return Vector(self.x / other, self.y / other, self.z / other)
+
+    def __itruediv__(self, other):
+        self.x /= other
+        self.y /= other
+        self.z /= other
+
     def __rmul__(self,other):
         return Vector(self.x * other, self.y * other, self.z * other)
+
+    def __repr__(self):
+        return "Vector({0},{1},{2})".format(self.x,self.y,self.z)
 
     def __str__(self):
         return "Vector({0},{1},{2})".format(self.x,self.y,self.z)
 
     def length(self):
-        return math.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+        return math.sqrt(self * self)
 
     def cross(self, other):
         return Vector(self.y * other.z - self.z * other.y,
@@ -49,11 +65,16 @@ class Vector:
         return (self.x,self.y,self.z)
 
     def normalize(self):
-        """vector with length 1"""
-        if self == Vector():
-            return self
-        else:
-            return self*(1/self.length())
+        """normalizes the vector"""
+        l = self.length()
+        if l != 0:
+            self /= l
+
+    def normal(self):
+        '''returns a normalized vector, colinear to self'''
+        v = Vector(self.x, self.y, self.z)
+        v.normalize()
+        return v
 
     def colinear(self, other):
         return self.cross(other).length() < epsilon
@@ -62,12 +83,11 @@ class Vector:
 class Line:
     def __init__(self, point1, point2):
         self.point = copy.deepcopy(point1)
-        self.tangent = (point1 - point2)
-        self.tangent.normalize()
+        self.tangent = (point2 - point1).normal()
 
     def __eq__(self,other):
         if other is None:
-            return 0
+            return False
         return self.contains(other.point) and self.tangent.colinear(other.tangent)
 
     def distance(self, point):
@@ -97,7 +117,7 @@ class Line:
         if self.colinear(other):
             return None
 
-        x = other.point + self.distance(other.point) * (self.tangent * other.tangent) * other.tangent
+        x = other.point + (self.distance(other.point) / (1 - abs(self.tangent * other.tangent) ** 2)) * other.tangent
         if self.contains(x):
             return x
         else:
@@ -153,11 +173,13 @@ class Edge:
         return "Edge({0},{1})".format(self.vertex1,self.vertex2)
 
     def line(self):
-        return Line(self.vertex1,self.vertex2)
+        return Line(self.vertex1, self.vertex2)
 
     def contains(self,point):
-        factor = (point - self.vertex1).length() / (self.vertex2 - self.vertex1).length()
-        return (0 <= factor <= 1) and ((1 - factor) * self.vertex1 + factor * self.vertex2) == point
+        vec1 = point - self.vertex1
+        vec2 = self.vertex2 - self.vertex1
+        factor = (vec1 * vec2) / (vec2 * vec2)
+        return (0 <= factor <= 1) and (factor * vec2 == vec1)
 
     """Intersection of the edge and line or ray"""
     def intersection(self, line):
@@ -179,13 +201,13 @@ class Edge:
             intersect = line.intersection(self.line())
             if isinstance(intersect,Line):
                 return self
-            if not(intersect is None) and self.contains(intersect):
+            if intersect is not None and self.contains(intersect):
                 return intersect
             else:
                 return None
 
-"""Triangle with 3 points"""
 class Triangle:
+    """Triangle with 3 points"""
     def __init__(self,vertexA,vertexB,vertexC):
         self.vertex = {'A' : vertexA,
         'B' : vertexB,
