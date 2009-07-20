@@ -4,7 +4,7 @@ from . import klump
 keycode = {}
 for name in dir(klump):
     if name.startswith('SDLK_'):
-        keycode[name.replace('SDLK_', '', 1)] = eval('klump.{0}'.format(name))
+        keycode[name.replace('SDLK_', '', 1).lower()] = eval('klump.{0}'.format(name))
     elif name.startswith('KMOD_'):
         keycode[name.replace('KMOD_', 'MOD_', 1)] = eval('klump.{0}'.format(name))
 

@@ -2,7 +2,9 @@ import math
 import copy
 from array import array
 from collections import defaultdict
-epsilon = 0.0001
+epsilon = 0.000001
+def eq(a, b):
+    return abs(a - b) < epsilon
 
 """3-dimensional vector with coordinates"""
 class Vector:
@@ -18,7 +20,7 @@ class Vector:
     def __eq__(self,other):
         if other is None:
             return False
-        return abs(self.x - other.x)<epsilon and abs(self.y - other.y)<epsilon and abs(self.z - other.z)<epsilon
+        return eq(self.x, other.x) and eq(self.y, other.y) and eq(self.z, other.z)
 
     def __hash__(self):
         return id(self)
@@ -30,6 +32,7 @@ class Vector:
         self.x += other.x
         self.y += other.y
         self.z += other.z
+        return self
 
     def __sub__(self,other):
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
@@ -38,6 +41,7 @@ class Vector:
         self.x -= other.x
         self.y -= other.y
         self.z -= other.z
+        return self
 
     def __mul__(self,other):
         if isinstance(other,Vector):
@@ -49,6 +53,7 @@ class Vector:
         self.x *= other
         self.y *= other
         self.z *= other
+        return self
 
     def __truediv__(self, other):
         return Vector(self.x / other, self.y / other, self.z / other)
@@ -57,6 +62,7 @@ class Vector:
         self.x /= other
         self.y /= other
         self.z /= other
+        return self
 
     def __rmul__(self,other):
         return Vector(self.x * other, self.y * other, self.z * other)
@@ -259,26 +265,34 @@ class Triangle:
                     dist = curr_dist
         return dist
 
+    def normal(self):
+        return (self.vertex['B'] - self.vertex['A']).cross(self.vertex['C'] - self.vertex['A']).normal()
+
 class Model:
-    def __init__(self,*args):
+    def __init__(self,*args,smooth = True):
         self.dirty = True
         self.faces = list()
+        self.points = list()
+        self.smooth = smooth
         self.put(args)
 
     def put(self,triangles):
+        abc = ('A', 'B', 'C')
         for triangle in triangles:
+            points = [triangle.vertex[l] for l in abc]
+            for i, p in zip(range(3), points):
+                try:
+                    points[i] = self.points[self.points.index(p)]
+                except ValueError:
+                    self.points.append(p)
+            new_face = Triangle(*points)
             for face in self.faces:
-                for new_edge in triangle.edge.values():
-                    for own_edge in face.edge.values():
-                        for v in (own_edge.vertex1, own_edge.vertex2):
-                            if new_edge.vertex1 == v:
-                                new_edge.vertex1 = v
-                            if new_edge.vertex2 == v:
-                                new_edge.vertex2 = v
-                        if new_edge == own_edge:
-                            new_edge.nextEdge = own_edge
-                            own_edge.nextEdge = new_edge
-            self.faces.append(triangle)
+                for edge in face.edge.values():
+                    for new_edge in new_face.edge.values():
+                        if new_edge == edge:
+                            new_edge.nextEdge = edge
+                            edge.nextEdge = new_edge
+            self.faces.append(new_face)
         self.dirty = True
 
     """returns the distance from ray.start to the model"""
@@ -293,23 +307,32 @@ class Model:
     def refill_arrays(self):
         self.cached_vertices = array('d')
         self.cached_normals = array('d')
-        nodes = defaultdict(Vector)
-        for face in self.faces:
-            print(face.edge)
-            nA = (face.edge['B'].vertex1 - face.edge['B'].vertex2).cross(face.edge['C'].vertex2 - face.edge['C'].vertex1).normal()
-            nB = (face.edge['C'].vertex1 - face.edge['C'].vertex2).cross(face.edge['A'].vertex2 - face.edge['A'].vertex1).normal()
-            nC = (face.edge['A'].vertex1 - face.edge['A'].vertex2).cross(face.edge['B'].vertex2 - face.edge['B'].vertex1).normal()
-            nodes[face.vertex['A']] += nA
-            nodes[face.vertex['B']] += nB
-            nodes[face.vertex['C']] += nC
-        for vector, normal in nodes:
-            normal.normalize()
-            self.cached_vertices.append(vector.x)
-            self.cached_vertices.append(vector.y)
-            self.cached_vertices.append(vector.z)
-            self.cached_normals.append(normal.x)
-            self.cached_normals.append(normal.y)
-            self.cached_normals.append(normal.z)
+        if self.smooth:
+            normals = defaultdict(Vector)
+            centre = sum(self.points, Vector())
+            centre /= len(self.points)
+            for point in self.points:
+                normals[point] = (point - centre).normal()
+            for face in self.faces:
+                for vertex in (face.vertex['A'], face.vertex['B'], face.vertex['C']):
+                    self.cached_vertices.append(vertex.x)
+                    self.cached_vertices.append(vertex.y)
+                    self.cached_vertices.append(vertex.z)
+                    normal = normals[vertex]
+                    self.cached_normals.append(normal.x)
+                    self.cached_normals.append(normal.y)
+                    self.cached_normals.append(normal.z)
+        else:
+            for face in self.faces:
+                normal = face.normal()
+                for vertex in (face.vertex['A'], face.vertex['B'], face.vertex['C']):
+                    self.cached_vertices.append(vertex.x)
+                    self.cached_vertices.append(vertex.y)
+                    self.cached_vertices.append(vertex.z)
+                    self.cached_normals.append(normal.x)
+                    self.cached_normals.append(normal.y)
+                    self.cached_normals.append(normal.z)
+
         self.dirty = False
 
     def arrays(self):

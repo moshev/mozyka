@@ -13,7 +13,7 @@ class Dragger:
 plum.init()
 w = plum.init_screen(800, 600, "Press A", "")
 
-w.key.add_handler(plum.keycode['a'], lambda state: print("Pressed A") if state == plum.keystate.PRESSED else print("Boo"))
+w.key.add_handler(plum.keycode['a'], lambda state: print("Pressed A") if state == plum.keystate.PRESSED else print("Released A"))
 w.mouse.add_clickhandler(1, lambda x, y: print("LMB clicked at {0}, {1}.".format(x, y)))
 w.mouse.add_draghandler(1, Dragger())
 

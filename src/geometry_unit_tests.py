@@ -1,5 +1,6 @@
 from geometry import *
 from math import *
+from array import array
 import unittest
 
 class DataModelTest(unittest.TestCase):
@@ -40,18 +41,63 @@ class DataModelTest(unittest.TestCase):
 
     def test_triangle(self):
         triangle = Triangle(Vector(2,0,0),Vector(0,2,0),Vector(5,5,0))
-        self.assertEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), sqrt(2))
+        self.assertAlmostEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), sqrt(2))
         triangle = Triangle(Vector(2,2,0),Vector(3,3,0),Vector(5,2,0))
-        self.assertEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), 2*sqrt(2))
+        self.assertAlmostEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), 2*sqrt(2))
         triangle = Triangle(Vector(5,2,0),Vector(6,4,0),Vector(5,5,0))
-        self.assertEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), 5*sqrt(2))
+        self.assertAlmostEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), 5*sqrt(2))
 
     def test_model(self):
         a = Model(Triangle(Vector(0,0,0),Vector(1,0,0),Vector(0,1,0)),Triangle(Vector(0,0,0),Vector(0,1,0),Vector(0,0,1)),Triangle(Vector(0,0,0),Vector(1,0,0),Vector(0,0,1)))
-        self.assertTrue(a.bag[0].edge['B'].nextEdge == a.bag[1].edge['C'])
-        self.assertTrue(a.bag[0].edge['C'].nextEdge == a.bag[2].edge['C'])
-        self.assertTrue(a.bag[1].edge['B'].nextEdge == a.bag[2].edge['B'])
+        self.assertTrue(a.faces[0].edge['B'].nextEdge == a.faces[1].edge['C'])
+        self.assertTrue(a.faces[0].edge['C'].nextEdge == a.faces[2].edge['C'])
+        self.assertTrue(a.faces[1].edge['B'].nextEdge == a.faces[2].edge['B'])
         self.assertEqual(a.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), 0)
+
+    def test_model_arrays(self):
+        cube = Model(
+                Triangle(Vector(0, 0, 0),
+                    Vector(0, 0, 1),
+                    Vector(0, 1, 0)),
+                Triangle(Vector(0, 1, 0),
+                    Vector(0, 0, 1),
+                    Vector(0, 1, 1)),
+                Triangle(Vector(0, 0, 0),
+                    Vector(0, 1, 0),
+                    Vector(1, 0, 0)),
+                Triangle(Vector(1, 0, 0),
+                    Vector(0, 1, 0),
+                    Vector(1, 1, 0)),
+                Triangle(Vector(1, 0, 0),
+                    Vector(1, 1, 0),
+                    Vector(1, 0, 1)),
+                Triangle(Vector(1, 0, 1),
+                    Vector(1, 1, 0),
+                    Vector(1, 1, 1)),
+                Triangle(Vector(0, 0, 1),
+                    Vector(1, 0, 1),
+                    Vector(0, 1, 1)),
+                Triangle(Vector(0, 1, 1),
+                    Vector(1, 0, 1),
+                    Vector(1, 1, 1)),
+                Triangle(Vector(0, 1, 0),
+                    Vector(0, 1, 1),
+                    Vector(1, 1, 0)),
+                Triangle(Vector(1, 1, 0),
+                    Vector(0, 1, 1),
+                    Vector(1, 1, 1)),
+                Triangle(Vector(0, 0, 0),
+                    Vector(1, 0, 0),
+                    Vector(0, 0, 1)),
+                Triangle(Vector(0, 0, 1),
+                    Vector(1, 0, 0),
+                    Vector(1, 0, 1)))
+        vertices, normals = cube.arrays()
+        self.assertEqual(vertices, array('d', [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1]))
+        e = 1/sqrt(3)
+        for i, a, b in zip(range(len(normals)), normals, array('d', [-e, -e, -e, -e, -e, e, -e, e, -e, -e, e, -e, -e, -e, e, -e, e, e, -e, -e, -e, -e, e, -e, e, -e, -e, e, -e, -e, -e, e, -e, e, e, -e, e, -e, -e, e, e, -e, e, -e, e, e, -e, e, e, e, -e, e, e, e, -e, -e, e, e, -e, e, -e, e, e, -e, e, e, e, -e, e, e, e, e, -e, e, -e, -e, e, e, e, e, -e, e, e, -e, -e, e, e, e, e, e, -e, -e, -e, e, -e, -e, -e, -e, e, -e, -e, e, e, -e, -e, e, -e, e])):
+            self.assertAlmostEqual(a, b, msg="{0} != {1} at index {2}".format(a, b, i))
+
 
 def suite():
 

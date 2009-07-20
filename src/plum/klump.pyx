@@ -1,6 +1,7 @@
 cimport gl
 cimport sdl
 cimport stdlib
+cimport stdio
 cimport cmath
 from python_buffer cimport *
 from collections import namedtuple
@@ -331,6 +332,13 @@ def get_last_error():
     else:
         return bytes(error).decode(u"utf-8")
 
+cdef void report_array(int n, double* arr):
+    cdef int i
+    stdio.printf("Array [")
+    for i in range(n):
+        stdio.printf("%lf ", arr[i])
+    stdio.printf("]\n")
+
 def wait_for_next_event():
     """
     Waits until there's a new event and returns it.
@@ -358,8 +366,6 @@ def wait_for_next_event():
         return None
 
 cdef struct Camera:
-    # distance from point to plane
-    double distance
     # transform matrix from global coords to plane coords
     double perspective[16]
 
@@ -368,9 +374,11 @@ cdef class GL:
     
     cdef Camera camera
     cdef int width, height
+    cdef public int debug_report
     def __init__(self, width, height):
         '''width and height - window size in pixels'''
         self.width, self.height = width, height
+        self.debug_report = 0
 
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glShadeModel(gl.GL_SMOOTH)
@@ -388,10 +396,10 @@ cdef class GL:
         light_colour[1] = 1
         light_colour[2] = 1
         cdef float light_position[4]
-        light_position[0] = -1
-        light_position[1] = -1
-        light_position[2] = 1
-        light_position[3] = 0
+        light_position[0] = -5
+        light_position[1] = 5
+        light_position[2] = 5
+        light_position[3] = 1
         gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, &light_colour[0])
         gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, &light_position[0])
 
@@ -399,15 +407,14 @@ cdef class GL:
         cdef Camera c
         cdef int i
         for i in range(16):
-            if i % 4 == 0:
+            if i % 5 == 0:
                 c.perspective[i] = 1
             else:
                 c.perspective[i] = 0
-        c.distance = 1
         self.camera = c
         self.set_viewport(width, height)
 
-    def set_viewport(self, width, height):
+    def set_viewport(self, int width, int height):
         '''width, height - window's width and height in pixels
         Initializes the viewport, so that the screen fits a rectangle with
         sides 2, centred at (0,0)'''
@@ -415,14 +422,43 @@ cdef class GL:
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
 
+        cdef double ratio = <double>width/<double>height
         cdef Camera c = self.camera
-        gl.glFrustum(-1, 1, -1, 1, c.distance, c.distance+1)
+        if ratio > 1:
+            gl.glFrustum(-1, 1, -1/ratio, 1/ratio, 1, 50)
+        else:
+            gl.glFrustum(-ratio, ratio, -1, 1, 1, 50)
         gl.glMultMatrixd(&c.perspective[0])
+
+    def last_error(self):
+        return gl.glGetError()
+
+    def rotate(self, double ax, double ay, double az):
+        '''Rotate at angles ax, ay and az around x, y and z axis'''
+        gl.glRotated(ax, 1, 0, 0)
+        gl.glRotated(ay, 0, 1, 0)
+        gl.glRotated(az, 0, 0, 1)
+
+    def translate(self, double x, double y, double z):
+        gl.glTranslated(x, y, z)
+
+    def scale(self, double x, double y, double z):
+        gl.glScaled(x, y, z)
+
+    def set_colour(self, float r, float g, float b):
+        cdef float colour[4]
+        colour[0] = r
+        colour[1] = g
+        colour[2] = b
+        colour[3] = 1
+        gl.glMaterialfv(gl.GL_FRONT, gl.GL_DIFFUSE, &colour[0])
+
+    def clear_screen(self):
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
     def begin_scene(self):
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
     def render_triangles(self, vertices, normals):
         '''vertices and normals must be objects supporting the buffer protocol.
@@ -436,14 +472,17 @@ cdef class GL:
         if PyObject_CheckBuffer(c_normals) == 0:
             raise TypeError(normals.__class__.__name__ + u"doesn't support the buffer protocol")
 
-        if PyObject_GetBuffer(c_vertices, &vertices_buffer, PyBUF_STRIDES | PyBUF_ND) != 0:
+        if PyObject_GetBuffer(c_vertices, &vertices_buffer, PyBUF_C_CONTIGUOUS | PyBUF_ND) != 0:
             raise Exception(u"Could not obtain a buffer from vertices")
-        if PyObject_GetBuffer(c_normals, &normals_buffer, PyBUF_STRIDES | PyBUF_ND) != 0:
+        if PyObject_GetBuffer(c_normals, &normals_buffer, PyBUF_C_CONTIGUOUS | PyBUF_ND) != 0:
             PyBuffer_Release(&vertices_buffer)
             raise Exception(u"Could not obtain a buffer from normals")
 
-        gl.glVertexPointer(3, gl.GL_DOUBLE, vertices_buffer.strides[0], vertices_buffer.buf)
-        gl.glNormalPointer(gl.GL_DOUBLE, normals_buffer.strides[0], normals_buffer.buf)
+        if self.debug_report == 1:
+            report_array(vertices_buffer.shape[0], <double*>vertices_buffer.buf)
+            report_array(vertices_buffer.shape[0], <double*>normals_buffer.buf)
+        gl.glVertexPointer(3, gl.GL_DOUBLE, 0, vertices_buffer.buf)
+        gl.glNormalPointer(gl.GL_DOUBLE, 0, normals_buffer.buf)
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, vertices_buffer.shape[0])
 
         PyBuffer_Release(&vertices_buffer)
