@@ -3,7 +3,6 @@ from math import *
 
 __all__ = ['Cube', 'Rectangle', 'Icosahedron']
 
-
 class Cube(Model):
     vertices = [
             Vector(0, 0, 0),

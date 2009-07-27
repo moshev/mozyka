@@ -1,11 +1,13 @@
 import math
+import numbers
 import types
 from copy import copy
 from array import array
 from collections import defaultdict
 from itertools import islice
+from ._util import *
 from .relations import *
-__all__ = ['Vector', 'Edge', 'Line', 'Ray', 'Plane', 'Triangle']
+__all__ = ['Vector', 'normalize', 'cross', 'Edge', 'Line', 'Ray', 'Plane', 'Triangle', 'Model']
 
 class Vector:
     __slots__ = ['xyz']
@@ -35,10 +37,10 @@ class Vector:
         return id(self)
 
     def __add__(self,other):
-        return Vector()
+        return Vector(a + b for a, b in zip(self.xyz, other.xyz))
 
     def __sub__(self,other):
-        return Vector(a - other for a in self.xyz)
+        return Vector(a - b for a, b in zip(self.xyz, other.xyz))
 
     def __mul__(self,other):
         if isinstance(other,Vector):
@@ -62,19 +64,29 @@ class Vector:
         '''Length of vector'''
         return math.sqrt(self * self)
 
+    def __pow__(self, other):
+        if isinstance(other, numbers.Real) and int(other) == other:
+            i = int(other)
+            if i == 1:
+                return self
+            else:
+                return (a ** i for a in self.xyz)
+        else:
+            return NotImplemented
+
     len = property(__abs__)
 
-    def cross(self, other):
-        sx, sy, sz = self.xyz
-        ox, oy, oz = other.xyz
-        return Vector(sy * oz - sz * oy, sz * ox - sx * oz, sx * oy - sy * ox)
+def cross(u, v):
+    ux, uy, uz = u.xyz
+    vx, vy, vz = v.xyz
+    return Vector(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
 
-    def normalize(self):
-        l = self.len
-        if l != 0:
-            return self / l
-        else:
-            return self
+def normalize(v):
+    l = v.len
+    if l != 0:
+        return v / l
+    else:
+        return v
 
 class Line:
     def __init__(self, *args, point = None, tangent = None):
@@ -84,14 +96,14 @@ class Line:
         if len(args) == 0:
             assert point is not None and tangent is not None
             self.point = point
-            self.tangent = tangent.normalize()
+            self.tangent = normalize(tangent)
         elif len(args) == 1:
             assert points is None and tangent is None
             self.__init__(*args[0])
         elif len(args) == 2:
             assert points is None and tangent is None
             self.point = args[0]
-            self.tangent = (args[1] - args[0]).normalize()
+            self.tangent = normalize(args[1] - args[0])
         else:
             raise AttributeError
 
@@ -117,7 +129,7 @@ class Plane:
             self.normal = normal.normalise()
             self.d = -(self.normal * self.point)
         elif len(args) == 3:
-            self.__init__(args[0], (args[1] - args[0]).cross(args[2] - args[0])
+            self.__init__(args[0], (args[1] - args[0]).cross(args[2] - args[0]))
         else:
             raise AttributeError
 
@@ -162,7 +174,7 @@ class Triangle:
     c = property(lambda self: self.vertices[2])
 
     def normal(self):
-        return (self.b - self.a).cross(self.c - self.a).normalize()
+        return normalize(cross(self.b - self.a, self.c - self.a))
 
 class Model:
     def __init__(self,*args,smooth = True):

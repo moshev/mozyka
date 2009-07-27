@@ -3,14 +3,28 @@ from math import *
 from array import array
 import unittest
 
-class DataModelTest(unittest.TestCase):
-    def test_vector(self):
-        a = Vector()
-        b = Vector(0,0,0)
-        self.assertTrue(a==b)
-        self.assertEqual(Vector(0,3,4).normal(),Vector(0,3/5,4/5))
-        self.assertEqual(a.distance(Vector(3,0,0)),3)
+class TestVector(unittest.TestCase):
+    def setUp(self):
+        self.zero = Vector()
+        self.e1 = Vector(1, 0, 0)
+        self.e2 = Vector(0, 1, 0)
+        self.e3 = Vector(0, 0, 1)
 
+    def test_add(self):
+        self.assertEqual(self.e1 + self.e2, Vector(1, 1, 0))
+
+    def test_dot(self):
+        self.assertAlmostEqual(self.e1 * self.e2, 0)
+        self.assertAlmostEqual(self.e2 * self.e3, 0)
+        self.assertAlmostEqual(self.e3 * self.e1, 0)
+
+    def test_cross(self):
+        self.assertEqual(cross(self.e1, self.e2), self.e3)
+        self.assertEqual(cross(self.e2, self.e1), -self.e3)
+        self.assertAlmostEqual(self.e3 * self.e3, 1)
+        self.assertAlmostEqual(self.e3 * (-self.e3), -1)
+
+class TestGeometry(unittest.TestCase):
     def test_line(self):
         line = Line(Vector(0,0,0),Vector(5,5,0))
         self.assertTrue(line.contains(Vector(3,3,0)))
@@ -22,7 +36,7 @@ class DataModelTest(unittest.TestCase):
         self.assertEqual(line.intersection(line4),None)
 
     def test_ray(self):
-        ray = Ray(Vector(0,0,0),Vector(5,5,0))
+        ray = Ray(Vector(0,0,0), Vector(5,5,0))
         self.assertTrue(ray.contains(Vector(3,3,0)))
         self.assertFalse(ray.contains(Vector(-1,-1,0)))
 
@@ -40,12 +54,9 @@ class DataModelTest(unittest.TestCase):
         self.assertEqual(edge.intersection(ray), edge)
 
     def test_triangle(self):
-        triangle = Triangle(Vector(2,0,0),Vector(0,2,0),Vector(5,5,0))
-        self.assertAlmostEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), sqrt(2))
-        triangle = Triangle(Vector(2,2,0),Vector(3,3,0),Vector(5,2,0))
-        self.assertAlmostEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), 2*sqrt(2))
-        triangle = Triangle(Vector(5,2,0),Vector(6,4,0),Vector(5,5,0))
-        self.assertAlmostEqual(triangle.intersection(Ray(Vector(0,0,0),Vector(1,1,0))), 5*sqrt(2))
+        triangle = Triangle(Vector(2,0,0), Vector(0,2,0), Vector(5,5,0))
+        triangle = Triangle(Vector(2,2,0), Vector(3,3,0), Vector(5,2,0))
+        triangle = Triangle(Vector(5,2,0), Vector(6,4,0), Vector(5,5,0))
 
     def test_model(self):
         a = Model(Triangle(Vector(0,0,0),Vector(1,0,0),Vector(0,1,0)),Triangle(Vector(0,0,0),Vector(0,1,0),Vector(0,0,1)),Triangle(Vector(0,0,0),Vector(1,0,0),Vector(0,0,1)))
@@ -100,31 +111,13 @@ class DataModelTest(unittest.TestCase):
 
 
 def suite():
-
     suite = unittest.TestSuite()
-
-    suite.addTest(unittest.makeSuite(DataModelTest))
-
+    suite.addTest(unittest.makeSuite(TestVector))
+    #suite.addTest(unittest.makeSuite(TestGeometry))
     return suite
 
 
 if __name__ == '__main__':
-    suiteFew = unittest.TestSuite()
-
-    suiteFew.addTest(DataModelTest("test_vector"))
-
-    suiteFew.addTest(DataModelTest("test_model"))
-
-    suiteFew.addTest(DataModelTest("test_triangle"))
-
-    suiteFew.addTest(DataModelTest("test_line"))
-
-    suiteFew.addTest(DataModelTest("test_ray"))
-
-    suiteFew.addTest(DataModelTest("test_edge"))
-
-    #unittest.TextTestRunner(verbosity=2).run(suiteFew)
-
-    unittest.TextTestRunner(verbosity=2).run(suite())
+    unittest.TextTestRunner().run(suite())
 
 
