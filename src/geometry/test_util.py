@@ -8,28 +8,49 @@ class B: pass
 
 class C: pass
 
-class MD(metaclass = MM):
-    g = globals()
-    def A_B(a, b):
+class D: pass
+
+def foo():
+    return 'foo'
+
+class MD(metaclass = MetaMultidispatcher):
+    def A_B(self, a, b):
         return 'a b'
-    def A_C(a, c):
+    
+    def A_C(self, a, c):
         return 'a c'
-    def B_A(b, a):
-        return 'swapped ' + A_B(a, b)
+    
+    def B_A(self, b, a):
+        return 'swapped ' + self.A_B(a, b)
+
+    def D(self, d):
+        return 'd'
+
+    def A_B_C(self, a, b, c):
+        return foo()
 
 class TestMultiDispatch(unittest.TestCase):
     def setUp(self):
         self.a = A()
         self.b = B()
         self.c = C()
+        self.d = D()
 
     def testStraight(self):
         self.assertEqual(MD(self.a, self.c), 'a c')
         self.assertEqual(MD(self.a, self.b), 'a b')
+
     def testSwapped(self):
         self.assertEqual(MD(self.c, self.a), 'a c')
+
     def testGlobals(self):
         self.assertEqual(MD(self.b, self.a), 'swapped a b')
+
+    def testSingle(self):
+        self.assertEqual(MD(self.d), 'd')
+
+    def testFoo(self):
+        self.assertEqual(MD(self.a, self.b, self.c), 'foo')
 
 if __name__ == '__main__':
     unittest.TextTestRunner().run(unittest.makeSuite(TestMultiDispatch))

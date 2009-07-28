@@ -4,58 +4,54 @@ epsilon = 0.000001
 def eq(a, b):
     return abs(a - b) < epsilon
 
-
 class MetaMultidispatcher(type):
-    def _swapargs(f):
-        return lambda a, b: f(b, a)
+    def __swapargs(f):
+        return lambda self, a, b: f(self, b, a)
 
-    def __new__(metacls, name, bases, handlers):
+    def __new__(metacls, name, bases, members):
         '''
         Use like this:
         class Dispatcher(metaclass = MetaMultidispatcher):
-            # The metaclass needs to know about the globals
-            g = globals()
-
-            def A_B(a, b):
+            def A_B(self, a, b):
                 ... handling of types A and B ...
-            def G_E_F(...):
+            def G_E_F(self, ...):
                 ... handling of classes G, E, F ...
-            def F_G_E(...):
+            def F_G_E(self, ...):
                 ... this is different from the above ...
 
-        If called with exactly two arguments of type A and B and A_B is undefined, B_A is tried
-        instead. Throws AttributeError when there is no signature satisfying the arguments.
+        When A_B is defined without a corresponding B_A, it is generated instead.
+        Throws AttributeError when there is no signature satisfying the arguments.
 
-        Each function is directly callable from each other function.
+        The referenced names must be defined in the current context.
+        Unsupported: names with underscores, names with package names.
 
-        The referenced names must be defined in the current context. Unfortunately,
-        names with underscores are not supported.
+        The resulting object won't be a class, it will be an instance of the given class.
         '''
-        g = handlers['g']
         functiondict = dict()
         namere = re.compile(r'([a-z]+_)*[a-z]+', re.IGNORECASE)
-        for signature, handler in handlers.items():
+        for signature, handler in members.items():
             if not (isinstance(handler, types.FunctionType) and namere.match(signature)):
                 continue
             try:
-                sig = tuple(eval(clsname, g) for clsname in signature.split('_'))
-                handler.__globals__.update(handlers)
+                sig = tuple(handler.__globals__[clsname] for clsname in signature.split('_'))
                 functiondict[sig] = handler
                 if len(sig) == 2:
                     rsig = (sig[1], sig[0])
                     if rsig not in functiondict:
-                        functiondict[rsig] = MetaMultidispatcher._swapargs(handler)
+                        functiondict[rsig] = MetaMultidispatcher.__swapargs(handler)
             except NameError:
                 continue
-        handlers['functiondict'] = functiondict
-        return type.__new__(metacls, name, bases, handlers)
+        members['functiondict'] = functiondict
+        members['__call__'] = metacls.__dispatch
+        mdcls = type.__new__(metacls, name, bases, members)
+        return mdcls()
 
-    def __call__(self, *args):
+    def __dispatch(self, *args):
         if len(args) == 0:
             raise AttributeError('Need at least one argument')
         sig = tuple(arg.__class__ for arg in args)
         if sig in self.functiondict:
-            return self.functiondict[sig](*args)
+            return self.functiondict[sig](self, *args)
         else:
-            raise AttributeError('Cannot find function accepting types {0}'.format(arg.__class__.__name__ for arg in args))
+            raise AttributeError('Cannot find function accepting types {0}'.format(tuple(arg.__class__.__name__ for arg in args)))
 
