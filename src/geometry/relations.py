@@ -3,8 +3,6 @@ from ._util import *
 __all__ = ['intersect', 'colinear', 'distance']
 
 class colinear_prep(metaclass = MetaMultidispatcher):
-    g = globals()
-
     def Edge(e):
         return e.vertices[1] - e.vertices[0]
     
@@ -24,8 +22,6 @@ class colinear_prep(metaclass = MetaMultidispatcher):
         return v
 
 class colinear_test(metaclass = MetaMultidispatcher):
-    g = globals()
-
     def Plane_Plane(a, b):
         return Vector_Vector(a.normal, b.normal)
     
@@ -33,20 +29,19 @@ class colinear_test(metaclass = MetaMultidispatcher):
         return eq(p.normal * v, 0)
     
     def Vector_Vector(u, v):
-        return eq((u * v) ** 2, (u ** 2) * (v ** 2))
+        return not cross_isz(u, v)
 
 def colinear(x, y):
     return colinear_test(colinear_prep(x), colinear_prep(y))
 
 class distance(metaclass = MetaMultidispatcher):
-    g = globals()
-
     def Line_Vector(l, v):
-        return (v - l.point) * l.tangent
+        return distance.Vector_Vector(l.lerp((v - l.point) * l.tangent), v)
+
+    def Vector_Vector(u, v):
+        return abs(u - v)
 
 class intersect(metaclass = MetaMultidispatcher):
-    g = globals()
-
     def Edge_Edge(a, b):
         if a == b:
             return a
@@ -73,6 +68,9 @@ class intersect(metaclass = MetaMultidispatcher):
         return None
 
     def Edge_Vector(e, v):
+        if intersect.Line_Vector(Line(e.vertices), v):
+            if all(s <= p <= e or e <= p <= s for s, e, p in zip(e.vertices[0].xyz, e.vertices[1].xyz, v.xyz)):
+                return v
         return None
 
     def Line_Line(a, b):
@@ -90,7 +88,10 @@ class intersect(metaclass = MetaMultidispatcher):
         return None
 
     def Line_Vector(l, v):
-        return None
+        if colinear(v - l.point, l.tangent):
+            return v
+        else:
+            return None
 
     def Plane_Plane(a, b):
         return None
@@ -102,7 +103,10 @@ class intersect(metaclass = MetaMultidispatcher):
         return None
 
     def Plane_Vector(p, v):
-        return eq(p.normal * v + p.d, 0) or None
+        if eq(p.normal * v + p.d, 0):
+            return v
+        else:
+            return None
 
     def Ray_Ray(a, b):
         return None
@@ -111,6 +115,9 @@ class intersect(metaclass = MetaMultidispatcher):
         return None
 
     def Ray_Vector(r, v):
+        if intersect.Line_Vector(Line(point = r.start, tangent = r.direction), v):
+            if r.direction * (v - r.start) >= 0:
+                return v
         return None
 
     def Triangle_Triangle(a, b):
@@ -124,12 +131,4 @@ class intersect(metaclass = MetaMultidispatcher):
             return a
         else:
             return None
-
-# Classes:
-# Edge
-# Line
-# Plane
-# Ray
-# Triangle
-# Vector
 

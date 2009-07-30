@@ -81,6 +81,11 @@ def cross(u, v):
     vx, vy, vz = v.xyz
     return Vector(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
 
+def cross_isz(u, v):
+    ux, uy, uz = u.xyz
+    vx, vy, vz = v.xyz
+    return eq(uy * vz - uz * vy, 0) and eq(uz * vx - ux * vz, 0) and eq(ux * vy - uy * vx, 0)
+
 def normalize(v):
     l = v.len
     if l != 0:
@@ -116,7 +121,7 @@ class Line:
         l = (point - self.point) * self.tangent
         return abs(point - self.point - l * self.tangent)
 
-    def point(self, t):
+    def lerp(self, t):
         return self.point + t * self.tangent
 
 class Plane:
