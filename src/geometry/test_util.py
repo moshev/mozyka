@@ -14,19 +14,19 @@ def foo():
     return 'foo'
 
 class MD(metaclass = MetaMultidispatcher):
-    def A_B(self, a, b):
+    def A_B(a, b):
         return 'a b'
     
-    def A_C(self, a, c):
+    def A_C(a, c):
         return 'a c'
     
-    def B_A(self, b, a):
-        return 'swapped ' + self.A_B(a, b)
+    def B_A(b, a):
+        return 'swapped ' + MD.A_B(a, b)
 
-    def D(self, d):
+    def D(d):
         return 'd'
 
-    def A_B_C(self, a, b, c):
+    def A_B_C(a, b, c):
         return foo()
 
 class TestMultiDispatch(unittest.TestCase):
