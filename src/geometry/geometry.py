@@ -60,7 +60,8 @@ class Vector:
     def __neg__(self):
         return self * (-1)
 
-    def __abs__(self):
+    @property
+    def len(self):
         '''Length of vector'''
         return math.sqrt(self * self)
 
@@ -70,28 +71,9 @@ class Vector:
             if i == 1:
                 return self
             else:
-                return (a ** i for a in self.xyz)
+                return sum(a ** i for a in self.xyz)
         else:
             return NotImplemented
-
-    len = property(__abs__)
-
-def cross(u, v):
-    ux, uy, uz = u.xyz
-    vx, vy, vz = v.xyz
-    return Vector(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
-
-def cross_isz(u, v):
-    ux, uy, uz = u.xyz
-    vx, vy, vz = v.xyz
-    return eq(uy * vz - uz * vy, 0) and eq(uz * vx - ux * vz, 0) and eq(ux * vy - uy * vx, 0)
-
-def normalize(v):
-    l = v.len
-    if l != 0:
-        return v / l
-    else:
-        return v
 
 class Line:
     def __init__(self, *args, point = None, tangent = None):
@@ -117,10 +99,6 @@ class Line:
             return False
         return intersect(self, other.point) and colinear(self.tangent, other.tangent)
 
-    def distance(self, point):
-        l = (point - self.point) * self.tangent
-        return abs(point - self.point - l * self.tangent)
-
     def lerp(self, t):
         return self.point + t * self.tangent
 
@@ -131,7 +109,7 @@ class Plane:
         '''
         if len(args) == 0:
             self.point = point
-            self.normal = normal.normalise()
+            self.normal = normal
             self.d = -(self.normal * self.point)
         elif len(args) == 3:
             self.__init__(args[0], (args[1] - args[0]).cross(args[2] - args[0]))
@@ -164,15 +142,16 @@ class Edge:
     def __eq__(self,other):
         return (self.vertex1,self.vertex2) == (other.vertex1,other.vertex2) or (self.vertex1,self.vertex2) == (other.vertex2,other.vertex1)
 
-    def __str__(self):
+    def __repr__(self):
         return "Edge{0}".format(self.vertices)
 
 class Triangle:
+    __slots__ = ['vertices', 'edges']
     '''Triangle with 3 points'''
     def __init__(self, a, b, c):
         '''Triangle(a, b, c): new triangle with points v1, v2 and v3'''
         self.vertices = (a, b, c)
-        self.edges = (Edge(b, c), Edge(c, a), Edge(a, b))
+        self.edges = (Edge(a, b), Edge(b, c), Edge(c, a))
 
     a = property(lambda self: self.vertices[0])
     b = property(lambda self: self.vertices[1])
@@ -180,6 +159,12 @@ class Triangle:
 
     def normal(self):
         return normalize(cross(self.b - self.a, self.c - self.a))
+
+    @property
+    def edgevectors(self):
+        '''Generates the vectors AB, BC, CA'''
+        for e in self.edges:
+            yield e.vertices[1] - e.vertices[0]
 
 class Model:
     def __init__(self,*args,smooth = True):
