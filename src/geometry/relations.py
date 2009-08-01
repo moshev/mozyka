@@ -66,7 +66,12 @@ class intersect(metaclass = MetaMultidispatcher):
         return None
 
     def Edge_Line(e, l):
-        return None
+        v = intersect(Line(e.vertices), l)
+        if v is None:
+            return None
+        elif v == l:
+            return e
+        else:
 
     def Edge_Plane(e, p):
         return None
@@ -119,7 +124,13 @@ class intersect(metaclass = MetaMultidispatcher):
             return True
 
     def Line_Ray(l, r):
-        return None
+        v = intersect.Line_Line(l, Line(point = r.start, tangent = r.direction))
+        if v is None:
+            return None
+        elif v == l:
+            return r
+        else:
+            return v if (v - r.start) * r.direction >= 0 else None
 
     def Line_Triangle(l, t):
         return None
