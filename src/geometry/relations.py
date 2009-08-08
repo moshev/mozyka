@@ -63,7 +63,30 @@ class distance(metaclass = MetaMultidispatcher):
 
 class intersect(metaclass = MetaMultidispatcher):
     def Edge_Edge(a, b):
-        return None
+        v = intersect(Line(a.vertices), Line(b.vertices))
+        if v is None:
+            return None
+        elif isinstance(v, Line):
+            ia = tuple(p for p in a.vertices if intersect.Edge_Vector(b, p, skip_linetest = True))
+            ib = tuple(p for p in b.vertices if intersect.Edge_Vector(a, p, skip_linetest = True))
+            if len(ia) == 0:
+                if len(ib) == 0:
+                    return None
+                else:
+                    assert len(ib) == 2
+                    return b
+            elif len(ia) == 1:
+                assert len(ib) == 1
+                return Edge(ia[0], ib[0])
+            else:
+                assert len(ia) == 2
+                assert len(ib) == 0
+                return a
+        else:
+            if intersect.Edge_Vector(a, v, skip_linetest = True) and intersect.Edge_Vector(b, v, skip_linetest = True):
+                return v
+            else:
+                return None
 
     def Edge_Line(e, l):
         v = intersect(Line(e.vertices), l)
@@ -82,8 +105,8 @@ class intersect(metaclass = MetaMultidispatcher):
     def Edge_Triangle(e, t):
         return None
 
-    def Edge_Vector(e, v):
-        if intersect.Line_Vector(Line(e.vertices), v):
+    def Edge_Vector(e, v, skip_linetest = False):
+        if skip_linetest or intersect.Line_Vector(Line(e.vertices), v):
             if all(s <= p <= e or e <= p <= s for s, e, p in zip(e.vertices[0].xyz, e.vertices[1].xyz, v.xyz)):
                 return v
         return None

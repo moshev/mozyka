@@ -45,12 +45,12 @@ class MetaMultidispatcher(type):
         members['functiondict'] = functiondict
         return type.__new__(metacls, name, bases, members)
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         if len(args) == 0:
             raise AttributeError('Need at least one argument')
         sig = tuple(arg.__class__ for arg in args)
         if sig in self.functiondict:
-            return self.functiondict[sig](*args)
+            return self.functiondict[sig](*args, **kwargs)
         else:
             raise AttributeError('Cannot find function accepting types {0}'.format(tuple(arg.__class__.__name__ for arg in args)))
 
