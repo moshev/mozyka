@@ -1,18 +1,6 @@
 from .geometry import *
 from ._util import *
-__all__ = ['intersect', 'colinear', 'distance', 'cross', 'normalize', 'winding']
-
-def cross(u, v):
-    ux, uy, uz = u.xyz
-    vx, vy, vz = v.xyz
-    return Vector(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
-
-def normalize(v):
-    l = v.len
-    if l != 0:
-        return v / l
-    else:
-        return v
+__all__ = ['intersect', 'colinear', 'distance', 'winding']
 
 def winding(u, v, w):
     '''Checks if vectors u, v and w are wound in positive or negative direction.
@@ -95,6 +83,7 @@ class intersect(metaclass = MetaMultidispatcher):
         elif v == l:
             return e
         else:
+            raise NotImplementedError
 
     def Edge_Plane(e, p):
         return None
@@ -165,7 +154,15 @@ class intersect(metaclass = MetaMultidispatcher):
             return None
 
     def Plane_Plane(a, b):
-        return None
+        tangent = cross(a.normal, b.normal)
+        if tangent == Vector(0, 0, 0):
+            if intersect(b, a.point):
+                return a
+            else:
+                return None
+        else:
+            raise NotImplementedError
+            
 
     def Plane_Ray(p, r):
         return None

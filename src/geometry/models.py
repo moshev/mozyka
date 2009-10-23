@@ -1,4 +1,5 @@
-from geometry import *
+from .geometry import *
+from .relations import *
 from math import *
 
 __all__ = ['Cube', 'Rectangle', 'Icosahedron']
@@ -47,10 +48,12 @@ class Rectangle(Model):
 
 class Icosahedron(Model):
     def __init__(self):
-        Model.__init__(self, smooth = False)
+        Model.__init__(self, smooth = True)
+        pi_5 = pi / 5.0
+        cos_2pi_5 = cos(2.0 * pi_5)
         top = Vector(0, 1, 0)
-        upperring = [Vector(sin(radians(angle)), cos(radians(72)), cos(radians(angle))).normal() for angle in range(0, 360, 72)]
-        lowerring = [Vector(sin(radians(angle - 36)), -cos(radians(72)), cos(radians(angle - 36))).normal() for angle in range(0, 360, 72)]
+        upperring = [normalize(Vector(sin(c * pi_5), cos_2pi_5 / (1 - cos_2pi_5), cos(c * pi_5))) for c in range(0, 10, 2)]
+        lowerring = [normalize(Vector(sin(c * pi_5), -cos_2pi_5 / (1 - cos_2pi_5), cos(c * pi_5))) for c in range(-1, 9, 2)]
         bottom = Vector(0, -1, 0)
         triangles = []
         for i1, i2 in zip(range(5), ((n + 1) % 5 for n in range(5))):

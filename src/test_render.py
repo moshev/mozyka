@@ -1,6 +1,5 @@
 import plum
 from geometry import *
-from models import *
 
 class Renderer:
     def __init__(self, model, gl, translate = Vector(0, 0, -1.5), scale = Vector(1, 1, 1), rotate = Vector(0, 0, 0)):

@@ -483,7 +483,7 @@ cdef class GL:
             report_array(vertices_buffer.shape[0], <double*>normals_buffer.buf)
         gl.glVertexPointer(3, gl.GL_DOUBLE, 0, vertices_buffer.buf)
         gl.glNormalPointer(gl.GL_DOUBLE, 0, normals_buffer.buf)
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, vertices_buffer.shape[0])
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, vertices_buffer.shape[0]/3)
 
         PyBuffer_Release(&vertices_buffer)
         PyBuffer_Release(&normals_buffer)

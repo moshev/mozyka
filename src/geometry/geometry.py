@@ -6,8 +6,19 @@ from array import array
 from collections import defaultdict
 from itertools import islice
 from ._util import *
-from .relations import *
-__all__ = ['Vector', 'normalize', 'cross', 'Edge', 'Line', 'Ray', 'Plane', 'Triangle', 'Model']
+__all__ = ['Vector', 'Edge', 'Line', 'Ray', 'Plane', 'Triangle', 'Model', 'cross', 'normalize']
+
+def cross(u, v):
+    ux, uy, uz = u.xyz
+    vx, vy, vz = v.xyz
+    return Vector(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
+
+def normalize(v):
+    l = v.len
+    if l != 0:
+        return v / l
+    else:
+        return v
 
 class Vector:
     __slots__ = ['xyz']
@@ -94,7 +105,7 @@ class Line:
         else:
             raise AttributeError
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         if other is None:
             return False
         return intersect(self, other.point) and colinear(self.tangent, other.tangent)
@@ -139,8 +150,13 @@ class Edge:
             else:
                 self.triangle = None
 
-    def __eq__(self,other):
-        return (self.vertex1,self.vertex2) == (other.vertex1,other.vertex2) or (self.vertex1,self.vertex2) == (other.vertex2,other.vertex1)
+    def __eq__(self, other):
+        if self.vertices[0] == other.vertices[0]:
+            return self.vertices[1] == other.vertices[1]
+        elif self.vertices[0] == other.vertices[1]:
+            return self.vertices[1] == other.vertices[0]
+        else:
+            return False
 
     def __repr__(self):
         return "Edge{0}".format(self.vertices)
@@ -184,11 +200,11 @@ class Model:
                     self.points.append(p)
             new_face = Triangle(*points)
             for face in self.faces:
-                for edge in face.edge.values():
-                    for new_edge in new_face.edge.values():
+                for edge in face.edges:
+                    for new_edge in new_face.edges:
                         if new_edge == edge:
-                            new_edge.nextEdge = edge
-                            edge.nextEdge = new_edge
+                            new_edge.neighbour = edge
+                            edge.neighbour = new_edge
             self.faces.append(new_face)
         self.dirty = True
 
@@ -197,12 +213,11 @@ class Model:
         self.cached_normals = array('d')
         if self.smooth:
             normals = defaultdict(Vector)
-            centre = sum(self.points, Vector())
-            centre /= len(self.points)
+            centre = sum(self.points, Vector()) / len(self.points)
             for point in self.points:
-                normals[point] = (point - centre).normal()
+                normals[point] = normalize(point - centre)
             for face in self.faces:
-                for vertex in (face.vertex['A'], face.vertex['B'], face.vertex['C']):
+                for vertex in face.vertices:
                     self.cached_vertices.append(vertex.x)
                     self.cached_vertices.append(vertex.y)
                     self.cached_vertices.append(vertex.z)
@@ -213,7 +228,7 @@ class Model:
         else:
             for face in self.faces:
                 normal = face.normal()
-                for vertex in (face.vertex['A'], face.vertex['B'], face.vertex['C']):
+                for vertex in face.vertices:
                     self.cached_vertices.append(vertex.x)
                     self.cached_vertices.append(vertex.y)
                     self.cached_vertices.append(vertex.z)
@@ -221,6 +236,7 @@ class Model:
                     self.cached_normals.append(normal.y)
                     self.cached_normals.append(normal.z)
 
+        print("Wrote {0} triangles as {1} doubles".format(len(self.faces), len(self.cached_vertices)))
         self.dirty = False
 
     def arrays(self):
