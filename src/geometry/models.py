@@ -48,7 +48,7 @@ class Rectangle(Model):
 
 class Icosahedron(Model):
     def __init__(self):
-        Model.__init__(self, smooth = True)
+        Model.__init__(self, smooth=False)
         pi_5 = pi / 5.0
         cos_2pi_5 = cos(2.0 * pi_5)
         top = Vector(0, 1, 0)
