@@ -1,0 +1,33 @@
+mozyka=~/Projects/mozyka CD=. flags=r in=in.vim out=out.vim {
+ SConstruct
+ src/SConscript
+ README.mkd
+ source=src filter="**/*.py" {
+  geometry/__init__.py
+  geometry/_util.py
+  geometry/geometry.py
+  geometry/models.py
+  geometry/relations.py
+  geometry/test_geometry.py
+  geometry/test_util.py
+  linalg/__init__.py
+  linalg/ndarray.py
+  linalg/test_ndarray.py
+  main.py
+  plum/__init__.py
+  plum/generic.py
+  plum/interface.py
+  random_render.py
+  test_input.py
+  test_render.py
+ }
+ glue=src filter="**/*.pyx **/*.pxd" {
+  plum/klump.pyx
+  plum/cmath.pxd
+  plum/gl.pxd
+  plum/python_buffer.pxd
+  plum/sdl.pxd
+ }
+ in.vim
+ out.vim
+}
