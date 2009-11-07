@@ -30,11 +30,11 @@ cdef extern from "SDL/SDL.h":
         SDL_INIT_EVERYTHING
 
     enum:
-        # Available for SDL_CreateRGBSurface() or SDL_SetVideoMode() */
+        # Available for SDL_CreateRGBSurface() or SDL_SetVideoMode()
         SDL_SWSURFACE
         SDL_HWSURFACE
         SDL_ASYNCBLIT
-        # Available for SDL_SetVideoMode() */
+        # Available for SDL_SetVideoMode()
         SDL_ANYFORMAT
         SDL_HWPALETTE
         SDL_DOUBLEBUF
@@ -43,7 +43,7 @@ cdef extern from "SDL/SDL.h":
         SDL_OPENGLBLIT
         SDL_RESIZABLE
         SDL_NOFRAME
-        # Used internally (read-only) */
+        # Used internally (read-only)
         SDL_HWACCEL
         SDL_SRCCOLORKEY
         SDL_RLEACCELOK

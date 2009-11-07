@@ -61,7 +61,7 @@ class ndarray:
             if dim <= 0:
                 raise ValueError('shape must have only positive dimensions dimensions')
             data_len *= dim
-            self.weights.insert(0, dim * self.weights[-1])
+            self.weights.insert(0, dim * self.weights[0])
         self.weights = tuple(self.weights[1:])
         if shape != ():
             self.buffer = simplebuffer(data_len)
@@ -92,14 +92,21 @@ class ndarray:
 
     def __getitem__(self, key):
         if self.shape == ():
-            raise IndexError("Indexing 0-d array not allowed")
+            raise IndexError('Indexing 0-d array not allowed.')
+
         if not isinstance(key, tuple):
-            raise NotImplementedError()
+            index = key
+            resulting_shape = self.shape[1:]
         else:
-            if not len(key) == len(self.shape):
-                raise NotImplementedError()
+            if len(key) > len(self.shape):
+                raise IndexError('Index has more dimensions than array.')
             index = sum(starmap(operator.mul, zip(self.weights, key)))
-            return self.buffer[index]
+            resulting_shape = self.shape[len(key):]
+
+        if resulting_shape != ():
+            raise NotImplementedError
+
+        return self.buffer[index]
 
     def __repr__(self):
         # TODO: Fix formatting

@@ -1,12 +1,12 @@
 cdef extern from 'GL/gl.h':
-    # Constants {{{        
+    # Constants {{{1
 
     enum:
         # Boolean values {{{
         GL_FALSE
         GL_TRUE
         # Boolean Values }}}
-    
+
         # Data types  {{{
         GL_BYTE
         GL_UNSIGNED_BYTE
@@ -20,7 +20,7 @@ cdef extern from 'GL/gl.h':
         GL_4_BYTES
         GL_DOUBLE
         # Data types  }}}
-    
+
         # Primitives  {{{
         GL_POINTS
         GL_LINES
@@ -33,7 +33,7 @@ cdef extern from 'GL/gl.h':
         GL_QUAD_STRIP
         GL_POLYGON
         # Primitives  }}}
-    
+
         # Vertex Arrays  {{{
         GL_VERTEX_ARRAY
         GL_NORMAL_ARRAY
@@ -76,21 +76,21 @@ cdef extern from 'GL/gl.h':
         GL_T2F_C4F_N3F_V3F
         GL_T4F_C4F_N3F_V4F
         # Vertex Arrays  }}}
-    
+
         # Matrix Mode {{{
         GL_MATRIX_MODE
         GL_MODELVIEW
         GL_PROJECTION
         GL_TEXTURE
         # Matrix Mode  }}}
-    
+
         # Points {{{
         GL_POINT_SMOOTH
         GL_POINT_SIZE
         GL_POINT_SIZE_GRANULARITY
         GL_POINT_SIZE_RANGE
         # Points  }}}
-    
+
         # Lines {{{
         GL_LINE_SMOOTH
         GL_LINE_STIPPLE
@@ -100,7 +100,7 @@ cdef extern from 'GL/gl.h':
         GL_LINE_WIDTH_GRANULARITY
         GL_LINE_WIDTH_RANGE
         # Lines }}}
-    
+
         # Polygons {{{
         GL_POINT
         GL_LINE
@@ -122,7 +122,7 @@ cdef extern from 'GL/gl.h':
         GL_POLYGON_OFFSET_LINE
         GL_POLYGON_OFFSET_FILL
         # Polygons }}}
-    
+
         # Display {{{
         GL_COMPILE
         GL_COMPILE_AND_EXECUTE
@@ -130,7 +130,7 @@ cdef extern from 'GL/gl.h':
         GL_LIST_INDEX
         GL_LIST_MODE
         # Display }}}
-    
+
         # Depth {{{
         GL_NEVER
         GL_LESS
@@ -148,7 +148,7 @@ cdef extern from 'GL/gl.h':
         GL_DEPTH_WRITEMASK
         GL_DEPTH_COMPONENT
         # Depth }}}
-    
+
         # Lighting {{{
         GL_LIGHTING
         GL_LIGHT0
@@ -185,7 +185,7 @@ cdef extern from 'GL/gl.h':
         GL_COLOR_MATERIAL_PARAMETER
         GL_NORMALIZE
         # Lighting }}}
-    
+
         # User {{{
         GL_CLIP_PLANE0
         GL_CLIP_PLANE1
@@ -194,7 +194,7 @@ cdef extern from 'GL/gl.h':
         GL_CLIP_PLANE4
         GL_CLIP_PLANE5
         # User }}}
-    
+
         # Accumulation {{{
         GL_ACCUM_RED_BITS
         GL_ACCUM_GREEN_BITS
@@ -207,13 +207,13 @@ cdef extern from 'GL/gl.h':
         GL_MULT
         GL_RETURN
         # Accumulation }}}
-    
+
         # Alpha {{{
         GL_ALPHA_TEST
         GL_ALPHA_TEST_REF
         GL_ALPHA_TEST_FUNC
         # Alpha }}}
-    
+
         # Blending {{{
         GL_BLEND
         GL_BLEND_SRC
@@ -230,13 +230,13 @@ cdef extern from 'GL/gl.h':
         GL_ONE_MINUS_DST_COLOR
         GL_SRC_ALPHA_SATURATE
         # Blending }}}
-    
+
         # Render {{{
         GL_FEEDBACK
         GL_RENDER
         GL_SELECT
         # Render }}}
-    
+
         # Feedback {{{
         GL_2D
         GL_3D
@@ -255,12 +255,12 @@ cdef extern from 'GL/gl.h':
         GL_FEEDBACK_BUFFER_SIZE
         GL_FEEDBACK_BUFFER_TYPE
         # Feedback }}}
-    
+
         # Selection {{{
         GL_SELECTION_BUFFER_POINTER
         GL_SELECTION_BUFFER_SIZE
         # Selection }}}
-    
+
         # Fog {{{
         GL_FOG
         GL_FOG_MODE
@@ -273,7 +273,7 @@ cdef extern from 'GL/gl.h':
         GL_EXP
         GL_EXP2
         # Fog }}}
-    
+
         # Logic {{{
         GL_LOGIC_OP
         GL_INDEX_LOGIC_OP
@@ -296,7 +296,7 @@ cdef extern from 'GL/gl.h':
         GL_OR_REVERSE
         GL_OR_INVERTED
         # Logic }}}
-    
+
         # Stencil {{{
         GL_STENCIL_BITS
         GL_STENCIL_TEST
@@ -314,7 +314,7 @@ cdef extern from 'GL/gl.h':
         GL_INCR
         GL_DECR
         # Stencil }}}
-    
+
         # Buffers {{{
         GL_NONE
         GL_LEFT
@@ -353,7 +353,7 @@ cdef extern from 'GL/gl.h':
         GL_RGB
         GL_RGBA
         # Buffers }}}
-    
+
         # Implementation {{{
         GL_MAX_LIST_NESTING
         GL_MAX_EVAL_ORDER
@@ -369,7 +369,7 @@ cdef extern from 'GL/gl.h':
         GL_MAX_VIEWPORT_DIMS
         GL_MAX_CLIENT_ATTRIB_STACK_DEPTH
         # Implementation }}}
-    
+
         # Gets {{{
         GL_ATTRIB_STACK_DEPTH
         GL_CLIENT_ATTRIB_STACK_DEPTH
@@ -399,7 +399,7 @@ cdef extern from 'GL/gl.h':
         GL_TEXTURE_STACK_DEPTH
         GL_VIEWPORT
         # Gets }}}
-    
+
         # Evaluators {{{
         GL_AUTO_NORMAL
         GL_MAP1_COLOR_4
@@ -428,8 +428,8 @@ cdef extern from 'GL/gl.h':
         GL_ORDER
         GL_DOMAIN
         # Evaluators }}}
-    
-        # H{{{
+
+        # Hints {{{
         GL_PERSPECTIVE_CORRECTION_HINT
         GL_POINT_SMOOTH_HINT
         GL_LINE_SMOOTH_HINT
@@ -438,13 +438,13 @@ cdef extern from 'GL/gl.h':
         GL_DONT_CARE
         GL_FASTEST
         GL_NICEST
-        # H}}}
-    
+        # Hints }}}
+
         # Scissor {{{
         GL_SCISSOR_BOX
         GL_SCISSOR_TEST
         # Scissor }}}
-    
+
         # Pixel {{{
         GL_MAP_COLOR
         GL_MAP_STENCIL
@@ -495,7 +495,7 @@ cdef extern from 'GL/gl.h':
         GL_ZOOM_X
         GL_ZOOM_Y
         # Pixel }}}
-    
+
         # Texture {{{
         GL_TEXTURE_ENV
         GL_TEXTURE_ENV_MODE
@@ -541,14 +541,14 @@ cdef extern from 'GL/gl.h':
         GL_TEXTURE_GEN_R
         GL_TEXTURE_GEN_Q
         # Texture }}}
-    
+
         # Utility {{{
         GL_VENDOR
         GL_RENDERER
         GL_VERSION
         GL_EXTENSIONS
         # Utility }}}
-    
+
         # Errors {{{
         GL_NO_ERROR
         GL_INVALID_ENUM
@@ -558,7 +558,7 @@ cdef extern from 'GL/gl.h':
         GL_STACK_UNDERFLOW
         GL_OUT_OF_MEMORY
         # Errors }}}
-    
+
         # glPush {{{
         GL_CURRENT_BIT
         GL_POINT_BIT
@@ -582,8 +582,8 @@ cdef extern from 'GL/gl.h':
         GL_SCISSOR_BIT
         GL_ALL_ATTRIB_BITS
         # glPush }}}
-    
-    
+
+
         # OpenGL {{{
         GL_PROXY_TEXTURE_1D
         GL_PROXY_TEXTURE_2D
