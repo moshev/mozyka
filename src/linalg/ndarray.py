@@ -1,8 +1,9 @@
 import collections
 import copy
-import operator
+from operator import mul
 from functools import reduce
 from itertools import starmap
+from array import array as pyarray
 
 __all__ = ['ndarray', 'array']
 
@@ -13,25 +14,55 @@ def infer_shape(sequence):
         sequence = sequence[0]
     return tuple(shape)
 
-class simplebuffer(list):
-    def __init__(self, size):
-        super().__init__([0.0])
-        if size > 0:
-            super().__imul__(size)
+class linearbuffer():
+    def __init__(self, size, base=None, copy=False, offset=0):
+        '''
+        Constructs a linear buffer of float values, backed by efficient
+        storage, supporting the buffer interface. Has copy-on-write semantics
+        for slicing operations.
+        size -- number of elements
+        base -- base buffer when forming a view from slicing
+        copy -- whether to copy the given base
+        offset -- offset inside base at which this buffer's item 0 is
+        '''
+        self.offset = offset
+        self.view = not base or not copy
+        if base is None:
+            self.values = pyarray('d', [0] * size)
+        else:
+            if copy:
+                self.values = pyarray('d', base[offset:offset + size])
+            else:
+                self.values = base
 
-def array(object):
-    if isinstance(object, ndarray):
-        return ndarray(object.shape, object.buffer)
-    elif isinstance(object, collections.Sequence):
-        shape = infer_shape(object)
+    def __setitem__(self, index, value):
+        raise NotImplemented
+ 
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            if index.step != None:
+                raise NotImplementedError('Slicing with step.')
+            else:
+                return linearbuffer(size=(index.stop - index.start),
+                                    base=self.values,
+                                    copy=True,
+                                    offset=index.start)
+        else:
+            raise NotImplementedError
+
+def array(buffer):
+    if isinstance(buffer, ndarray):
+        return ndarray(buffer.shape, buffer.buffer, copy=False, base=buffer)
+    elif isinstance(buffer, collections.Sequence):
+        shape = infer_shape(buffer)
         for i in range(len(shape) - 1):
-            object = sum(object, [])
+            buffer = sum(buffer, [])
         return ndarray(shape, buffer)
     else:
-        raise TypeError("Can't create array from " + object.__class__.__name__)
+        raise TypeError("Can't create array from " + buffer.__class__.__name__)
 
 class ndarray:
-    def __init__(self, shape, buffer=None):
+    def __init__(self, shape, buffer=None, copy=True, offset=0, base=None):
         '''
         shape is a tuple, describing the array dimensions.
         shape may be (), in which case the ndarray is actually a scalar
@@ -63,10 +94,14 @@ class ndarray:
             data_len *= dim
             self.weights.insert(0, dim * self.weights[0])
         self.weights = tuple(self.weights[1:])
+        self.offset = offset
         if shape != ():
-            self.buffer = simplebuffer(data_len)
+            self.buffer = linearbuffer(data_len)
             if buffer is not None:
-                self.buffer[:] = tuple(map(float, buffer))
+                if copy:
+                    self.buffer[:] = tuple(map(float, buffer))
+                else:
+                    self.buffer = buffer
         else:
             self.buffer = buffer or 0.0
 
@@ -92,25 +127,39 @@ class ndarray:
 
     def __getitem__(self, key):
         if self.shape == ():
-            raise IndexError('Indexing 0-d array not allowed.')
+            raise TypeError('Indexing 0-d array not allowed.')
 
         if not isinstance(key, tuple):
             index = key
+            if index > self.shape[0]:
+                raise IndexError('Index overflow.')
+            if index < 0:
+                raise IndexError('Index less than 0.')
             resulting_shape = self.shape[1:]
         else:
             if len(key) > len(self.shape):
                 raise IndexError('Index has more dimensions than array.')
-            index = sum(starmap(operator.mul, zip(self.weights, key)))
+            if any(dim > limit or dim < 0 for dim, limit in zip(key, self.shape)):
+                raise IndexError('Dimension index out of bounds.')
+            index = sum(starmap(mul, zip(self.weights, key)))
             resulting_shape = self.shape[len(key):]
 
         if resulting_shape != ():
-            raise NotImplementedError
-
-        return self.buffer[index]
+            return ndarray(resulting_shape, buffer=self.buffer,
+                           copy=False, base=self)
+        else:
+            return self.buffer[index]
 
     def __repr__(self):
         # TODO: Fix formatting
-        return 'array({0})'.format(self.buffer)
+        return 'ndarray({0}, {1})'.format(self.shape, self.buffer)
+
+    def __eq__(self, other):
+        if isinstance(other, ndarray):
+            return self.shape == other.shape and self.buffer == other.buffer
+        else:
+            shape = infer_shape(other)
+            return self.shape == shape and self.buffer == other
 
 class Iterator:
     def __init__(self, array):

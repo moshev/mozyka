@@ -39,6 +39,10 @@ class TestComplexIdx(unittest.TestCase):
 
     def test_level1(self):
         self.assertEqual(self.array4d[0], ndarray((2, 3, 3), range(18)))
+        self.assertIs(self.array4d[1].base, self.array4d)
+
+    def test_multilevel(self):
+        self.assertSameElements(self.array4d[2][0][1], self.array4d[2, 0, 1])
 
 if __name__ == '__main__':
     unittest.main()
