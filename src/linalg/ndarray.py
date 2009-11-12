@@ -26,12 +26,13 @@ class linearbuffer():
         offset -- offset inside base at which this buffer's item 0 is
         '''
         self.offset = offset
-        self.view = not base or not copy
+        self.base = None
+        self.copy = copy
         if base is None:
             self.values = pyarray('d', [0] * size)
         else:
             if copy:
-                self.values = pyarray('d', base[offset:offset + size])
+                self.values = base.values[offset:offset + size]
             else:
                 self.values = base
 
@@ -48,7 +49,7 @@ class linearbuffer():
                                     copy=True,
                                     offset=index.start)
         else:
-            raise NotImplementedError
+            return self.values[offset + index]
 
 def array(buffer):
     if isinstance(buffer, ndarray):
