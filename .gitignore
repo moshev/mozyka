@@ -6,4 +6,7 @@ build/
 *.o
 *.c
 *.pyc
+/Session.vim
+/.eric4project
+*.e4p
 
