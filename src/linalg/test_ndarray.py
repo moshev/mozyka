@@ -74,8 +74,35 @@ class TestBuffer(unittest.TestCase):
         '''
         self.assertEqual(self.buffer[0], 0.0)
         with self.assertRaises(IndexError):
-            self.buffer[100]
+            dummy = self.buffer[100]
+        with self.assertRaises(IndexError):
             self.buffer[20] = 5
+
+    def test_views(self):
+        # indices relations:
+        # data:  0 1 2 3 4 5 6 7 8 9 size = 10
+        # view1:   0   1   2   3   4 size = 5
+        # view2:       0           1 size = 2
+        data = linearbuffer(10)
+        view1 = data[1::2]
+        view2 = view1[1:5:3]
+        self.assertEqual(len(data), 10)
+        self.assertEqual(len(view1), 5)
+        self.assertEqual(len(view2), 2)
+
+        self.assertEqual(view1[0], 0.0)
+        data[1] = 1
+        self.assertEqual(view1[0], 1.0)
+
+        self.assertEqual(data[5], 0.0)
+        view1[2] = 1
+        self.assertEqual(data[5], 1.0)
+
+        self.assertEqual(data[9], 0.0)
+        self.assertEqual(view1[4], 0.0)
+        view2[1] = 1
+        self.assertEqual(data[9], 1.0)
+        self.assertEqual(view1[4], 1.0)
 
 if __name__ == '__main__':
     unittest.main()
