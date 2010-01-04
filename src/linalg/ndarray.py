@@ -14,7 +14,7 @@ def infer_shape(sequence):
     return tuple(shape)
 
 class linearbuffer():
-    from array import array
+    from array import array as __array
 
     def __init__(self, size, base=None, copy=False, offset=0, step=1):
         '''
@@ -31,7 +31,7 @@ class linearbuffer():
         self.offset = offset
         self.step = step
         if base is None:
-            self.values = linearbuffer.array('d', [0] * size)
+            self.values = linearbuffer.__array('d', [0] * size)
         else:
             if copy:
                 self.values = base[offset:offset + size * step:step]
@@ -39,8 +39,12 @@ class linearbuffer():
                 self.values = base
 
     def __setitem__(self, index, value):
+        '''
+        Warning: Doesn't support ... syntax or negative indices in slices.
+        '''
         if isinstance(index, slice):
-            raise NotImplementedError
+            for i, j in zip(range(index.start or 0, index.stop or len(self), index.step or 1), range(len(value))):
+                self.values[self.offset + i * self.step] = value[j]
         else:
             self.values[self.offset + index * self.step] = value
  
@@ -64,6 +68,16 @@ class linearbuffer():
 
     def __len__(self):
         return self.size
+
+    def __repr__(self):
+        return 'linearbuffer(' + str(self.size) + ', [' + ', '.join(str(self.values[self.offset + i * self.step]) for i in range(self.size)) + '])'
+
+    def __iter__(self):
+        for i in range(self.offset, self.offset + self.size * self.step, self.step):
+            yield self.values[i]
+
+    def __eq__(self, other):
+        return len(self) == len(other) and all(a == b for a, b in zip(self, other))
 
 def array(buffer):
     if isinstance(buffer, ndarray):

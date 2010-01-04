@@ -104,6 +104,10 @@ class TestBuffer(unittest.TestCase):
         self.assertEqual(data[9], 1.0)
         self.assertEqual(view1[4], 1.0)
 
+    def test_equal(self):
+        buffer2 = linearbuffer(5)
+        self.assertEqual(self.buffer[:5], buffer2)
+
 if __name__ == '__main__':
     unittest.main()
 
