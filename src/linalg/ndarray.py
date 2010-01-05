@@ -3,6 +3,7 @@ import copy
 from operator import mul
 from functools import reduce
 from itertools import starmap
+from array import array as __array
 
 __all__ = ['ndarray', 'array']
 
@@ -12,72 +13,6 @@ def infer_shape(sequence):
         shape.append(len(sequence))
         sequence = sequence[0]
     return tuple(shape)
-
-class linearbuffer():
-    from array import array as __array
-
-    def __init__(self, size, base=None, copy=False, offset=0, step=1):
-        '''
-        Constructs a linear buffer of float values, backed by efficient
-        storage, supporting the buffer interface. Has copy-on-write semantics
-        for slicing operations.
-        size -- number of elements
-        base -- base buffer when forming a view from slicing or copying
-        copy -- whether to copy the given base
-        offset -- offset inside base at which this buffer's item 0 is
-        step -- how many elements to skip, if not accessing linearly.
-        '''
-        self.size = size
-        self.offset = offset
-        self.step = step
-        if base is None:
-            self.values = linearbuffer.__array('d', [0] * size)
-        else:
-            if copy:
-                self.values = base[offset:offset + size * step:step]
-            else:
-                self.values = base
-
-    def __setitem__(self, index, value):
-        '''
-        Warning: Doesn't support ... syntax or negative indices in slices.
-        '''
-        if isinstance(index, slice):
-            for i, j in zip(range(index.start or 0, index.stop or len(self), index.step or 1), range(len(value))):
-                self.values[self.offset + i * self.step] = value[j]
-        else:
-            self.values[self.offset + index * self.step] = value
- 
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            start = min(index.start or 0, self.size)
-            stop = min(index.stop or self.size, self.size)
-            step = index.step or 1
-            if start >= self.size:
-                return linearbuffer(size=0)
-            else:
-                # Take care to set the offset and step to the
-                # actual offset and step in the original array.
-                return linearbuffer(size=(stop - start + step - 1) // step,
-                                    base=self.values,
-                                    copy=False,
-                                    offset=self.offset + self.step * start,
-                                    step=step * self.step)
-        else:
-            return self.values[self.offset + index * self.step]
-
-    def __len__(self):
-        return self.size
-
-    def __repr__(self):
-        return 'linearbuffer(' + str(self.size) + ', [' + ', '.join(str(self.values[self.offset + i * self.step]) for i in range(self.size)) + '])'
-
-    def __iter__(self):
-        for i in range(self.offset, self.offset + self.size * self.step, self.step):
-            yield self.values[i]
-
-    def __eq__(self, other):
-        return len(self) == len(other) and all(a == b for a, b in zip(self, other))
 
 def array(buffer):
     if isinstance(buffer, ndarray):
@@ -125,10 +60,11 @@ class ndarray:
         self.weights = tuple(self.weights[1:])
         self.offset = offset
         if shape != ():
-            self.buffer = linearbuffer(data_len)
-            if buffer is not None:
+            if buffer is None:
+                self.buffer = __array('d', [0.0] * data_len)
+            else:
                 if copy:
-                    self.buffer[:] = tuple(map(float, buffer))
+                    self.buffer = __array('d', buffer[:data_len])
                 else:
                     self.buffer = buffer
         else:
