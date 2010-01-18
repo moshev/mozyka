@@ -1,4 +1,5 @@
 import collections
+import numbers
 import copy
 from operator import mul
 from functools import reduce
@@ -9,6 +10,9 @@ __all__ = ['ndarray', 'array']
 
 def infer_shape(sequence):
     shape = []
+    if isinstance(sequence, ndarray):
+        return sequence.shape
+
     while isinstance(sequence, collections.Sequence):
         shape.append(len(sequence))
         sequence = sequence[0]
@@ -58,17 +62,34 @@ class ndarray:
             data_len *= dim
             self.weights.insert(0, dim * self.weights[0])
         self.weights = tuple(self.weights[1:])
-        self.offset = offset
+        self.base = base
         if shape != ():
             if buffer is None:
+                self.offset = 0
                 self.buffer = __array('d', [0.0] * data_len)
             else:
                 if copy:
-                    self.buffer = __array('d', buffer[:data_len])
+                    self.offset = 0
+                    self.buffer = __array('d', buffer[offset:offset + data_len])
                 else:
+                    self.offset = offset
                     self.buffer = buffer
         else:
+            self.offset = 0
             self.buffer = buffer or 0.0
+
+    def __copy_on_write(self):
+        if self.base is not None:
+            self.buffer = __array('d', self.buffer[self.offset:self.offset + reduce(mul, self.shape)])
+            self.base = None
+
+    def __compatible(self, other):
+        '''
+        Returns whether self and other are compatible for arithmetic operations.
+        Meaning, if other has no more dimensions than self.
+        '''
+        othershape = infer_shape(other)
+        return len(self.shape) >= len(othershape)
 
     def __len__(self):
         if self.shape == ():
@@ -100,18 +121,20 @@ class ndarray:
                 raise IndexError('Index overflow.')
             if index < 0:
                 raise IndexError('Index less than 0.')
+
             resulting_shape = self.shape[1:]
+
         else:
             if len(key) > len(self.shape):
                 raise IndexError('Index has more dimensions than array.')
             if any(dim > limit or dim < 0 for dim, limit in zip(key, self.shape)):
                 raise IndexError('Dimension index out of bounds.')
+
             index = sum(starmap(mul, zip(self.weights, key)))
             resulting_shape = self.shape[len(key):]
 
         if resulting_shape != ():
-            return ndarray(resulting_shape, buffer=self.buffer,
-                           copy=False, base=self)
+            return ndarray(resulting_shape, buffer=self.buffer, copy=False, base=self)
         else:
             return self.buffer[index]
 
@@ -122,9 +145,36 @@ class ndarray:
     def __eq__(self, other):
         if isinstance(other, ndarray):
             return self.shape == other.shape and self.buffer == other.buffer
-        else:
+        elif isinstance(other, collections.Sequence):
             shape = infer_shape(other)
-            return self.shape == shape and self.buffer == other
+            return self.shape == shape and self.buffer == other.buffer
+
+        return NotImplemented
+
+    def __imul__(self, other):
+        if isinstance(other, collections.Sequence):
+            othershape = infer_shape(other)
+
+            if len(othershape) > len(self.shape):
+                raise ValueError("Too many dimensions in multiplicant")
+            elif len(self.shape) == 1:
+                for i, m in zip(range(len(self)), other):
+                    self.buffer[offset + i] *= m
+            else:
+                for mine, foreign in zip(self, other):
+                    mine *= foreign
+
+        elif isinstance(other, numbers.Real):
+            if self.shape == ():
+                self.buffer *= other
+            else:
+                for i in range(reduce(mul, self.shape)):
+                    self.buffer[offset + i] *= other
+
+    def __mul__(self, other):
+
+
+collections.Sequence.register(ndarray)
 
 class Iterator:
     def __init__(self, array):
@@ -141,6 +191,8 @@ class Iterator:
         self.pos += 1
         return ret
 
+collections.Iterator.register(Iterator)
+
 class ReverseIterator:
     def __init__(self, array):
         self.array = array
@@ -155,4 +207,6 @@ class ReverseIterator:
         ret = self.array[self.pos]
         self.pos -= 1
         return ret
+
+collections.Iterator.register(ReverseIterator)
 
