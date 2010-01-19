@@ -78,6 +78,10 @@ class ndarray:
             self.offset = 0
             self.buffer = buffer or 0.0
 
+    @property
+    def dimensions(self):
+        return len(self.shape)
+
     def __copy_on_write(self):
         if self.base is not None:
             self.buffer = __array('d', self.buffer[self.offset:self.offset + reduce(mul, self.shape)])
@@ -157,12 +161,12 @@ class ndarray:
 
             if len(othershape) > len(self.shape):
                 raise ValueError("Too many dimensions in multiplicant")
-            elif len(self.shape) == 1:
-                for i, m in zip(range(len(self)), other):
-                    self.buffer[offset + i] *= m
+            elif len(othershape) == len(self.shape):
+                for sub in self:
+                    sub *= other[i % othershape[0]]
             else:
-                for mine, foreign in zip(self, other):
-                    mine *= foreign
+                for sub in self:
+                    sub *= other
 
         elif isinstance(other, numbers.Real):
             if self.shape == ():
@@ -172,7 +176,9 @@ class ndarray:
                     self.buffer[offset + i] *= other
 
     def __mul__(self, other):
-
+        new = copy.copy(self)
+        new *= other
+        return new
 
 collections.Sequence.register(ndarray)
 
