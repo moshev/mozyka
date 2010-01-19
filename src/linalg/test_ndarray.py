@@ -62,6 +62,12 @@ class TestComplexIdx(unittest.TestCase):
         '''
         self.assertSameElements(self.array4d[2][0][1], self.array4d[2, 0, 1])
 
+class TestMath(unittest.TestCase):
+
+    def setUp(self):
+        self.vector = ndarray((4,), [0, 1, 0, 1])
+        self.matrix = ndarray((4, 4))
+
 if __name__ == '__main__':
     unittest.main()
 
