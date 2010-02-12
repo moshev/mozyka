@@ -1,10 +1,10 @@
-from ndarray import *
+from linalg import *
 import unittest
 
 class TestBasic(unittest.TestCase):
 
     def setUp(self):
-        self.array = ndarray((3, 3), list(range(9)))
+        self.array = ndarray((3, 3), base=list(range(9)))
 
     def test_copy(self):
         '''
@@ -13,22 +13,13 @@ class TestBasic(unittest.TestCase):
         copyarray = array(self.array)
         self.assertFalse(copyarray is self.array)
         self.assertFalse(copyarray.buffer is self.array.buffer)
-        self.assertListEqual(copyarray.buffer, self.array.buffer)
+        self.assertSameElements(copyarray.buffer, self.array.buffer)
 
 class TestSimpleIdx(unittest.TestCase):
 
     def setUp(self):
-        self.array0d = ndarray((), 3)
-        self.array1d = ndarray((6,), list(range(6)))
-        self.array4d = ndarray((4, 2, 3, 3), list(range(72)))
-
-    def test_0d(self):
-        '''
-        Test scalar equality and indexing (must raise)
-        '''
-        self.assertEqual(self.array0d, 3)
-        with self.assertRaises(TypeError):
-            self.array0d[0]
+        self.array1d = ndarray((6,), base=list(range(6)))
+        self.array4d = ndarray((4, 2, 3, 3), base=list(range(72)))
 
     def test_1d(self):
         '''
@@ -47,13 +38,13 @@ class TestSimpleIdx(unittest.TestCase):
 class TestComplexIdx(unittest.TestCase):
  
     def setUp(self):
-        self.array4d = ndarray((4, 2, 3, 3), list(range(72)))   
+        self.array4d = ndarray((4, 2, 3, 3), base=list(range(72)))   
 
     def test_level1(self):
         '''
         Test getting a sub-array from an array
         '''
-        self.assertEqual(self.array4d[0], ndarray((2, 3, 3), range(18)))
+        self.assertEqual(self.array4d[0], ndarray((2, 3, 3), base=list(range(18))))
         self.assertIs(self.array4d[1].base, self.array4d)
 
     def test_multilevel(self):
@@ -66,7 +57,11 @@ class TestMath(unittest.TestCase):
 
     def setUp(self):
         self.vector = ndarray((4,), [0, 1, 0, 1])
-        self.matrix = ndarray((4, 4))
+        self.matrix = identity_matrix(4)
+
+    def test_multiplication(self):
+        m = self.matrix * self.vector
+        self.assertSameElements(m.buffer, [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
 if __name__ == '__main__':
     unittest.main()

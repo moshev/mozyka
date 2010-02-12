@@ -1,10 +1,10 @@
 import collections
 import numbers
 import copy
-from operator import mul
+import operator
 from functools import reduce
 from itertools import starmap
-from array import array as __array
+from array import array as _array
 
 __all__ = ['ndarray', 'array']
 
@@ -20,31 +20,46 @@ def infer_shape(sequence):
 
 def array(buffer):
     if isinstance(buffer, ndarray):
-        return ndarray(buffer.shape, buffer.buffer, copy=False, base=buffer)
+        return ndarray(buffer.shape, copy=True, base=buffer)
     elif isinstance(buffer, collections.Sequence):
         shape = infer_shape(buffer)
         for i in range(len(shape) - 1):
             buffer = sum(buffer, [])
-        return ndarray(shape, buffer)
+        return ndarray(shape, base=buffer)
     else:
-        raise TypeError("Can't create array from " + buffer.__class__.__name__)
+        raise TypeError(buffer.__class__.__name__)
 
 class ndarray:
-    def __init__(self, shape, buffer=None, copy=True, offset=0, base=None):
+    def __init__(self, shape, copy=True, offset=0, base=None):
         '''
         shape is a tuple, describing the array dimensions.
-        shape may be (), in which case the ndarray is actually a scalar
-        buffer is a linearly expanded buffer of values. It is copied.
+
+        copy - whether to copy the base buffer (if not None)
+        
+        offset - offset into the base buffer, relative to its start.
+        If the base is a view on another ndarray, its offset is added to the given offset.
+        
+        base - a base ndarray or sequence to take values from.
+        If copy is false and base is not None, this creates a view on the base.
+        
         An array containing 10 elements is created like so:
+        
         >>> ndarray(shape=(10,))
-        array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        ndarray((10,), [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
         A 3x3 matrix is:
+        
         >>> ndarray((3, 3), [1, 2, 3, 4, 5, 6, 7, 8, 9]):
-        array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+        ndarray((3, 3), [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
         '''
+
+        if shape == ():
+            raise ValueError('shape must be a nonempty tuple')
+
         self.shape = shape
         c_type = None
         data_len = 1
+
         # How many elements each dimension takes
         # i.e. when shape = (2, 3, 1), then self.weights = (3, 1, 1)
         # And buffer is e.g. [1, 2, 3, 4, 5, 6]
@@ -62,38 +77,93 @@ class ndarray:
             data_len *= dim
             self.weights.insert(0, dim * self.weights[0])
         self.weights = tuple(self.weights[1:])
-        self.base = base
-        if shape != ():
-            if buffer is None:
-                self.offset = 0
-                self.buffer = __array('d', [0.0] * data_len)
-            else:
-                if copy:
-                    self.offset = 0
-                    self.buffer = __array('d', buffer[offset:offset + data_len])
-                else:
-                    self.offset = offset
-                    self.buffer = buffer
-        else:
+
+        buffer = base.buffer if isinstance(base, ndarray) else base
+
+        if buffer is None:
+            self.base = None
             self.offset = 0
-            self.buffer = buffer or 0.0
+            self.buffer = _array('d', [0.0] * data_len)
+        else:
+            if copy:
+                self.base = None
+                self.offset = 0
+                self.buffer = _array('d', buffer[offset:offset + data_len])
+            else:
+                self.base = base
+                self.offset = offset
+                self.buffer = buffer
 
     @property
     def dimensions(self):
         return len(self.shape)
 
+    @property
+    def flat_length(self):
+        return reduce(operator.mul, self.shape)
+
+    @property
+    def is_view(self):
+        return self.base is not None
+
     def __copy_on_write(self):
         if self.base is not None:
-            self.buffer = __array('d', self.buffer[self.offset:self.offset + reduce(mul, self.shape)])
+            self.buffer = _array('d', self.buffer[self.offset:self.offset + self.flat_length])
             self.base = None
 
-    def __compatible(self, other):
+    def __parse_index(self, index):
         '''
-        Returns whether self and other are compatible for arithmetic operations.
-        Meaning, if other has no more dimensions than self.
+        Returns linear index into the backing array and the resulting shape.
+        i.e. (linear_index + offset, self.shape[length(index):])
+        raises IndexError if index out of bounds
         '''
-        othershape = infer_shape(other)
-        return len(self.shape) >= len(othershape)
+        if isinstance(index, tuple):
+            if len(index) > len(self.shape):
+                raise IndexError('Index has more dimensions than array.')
+            if any(dim > limit or dim < 0 for dim, limit in zip(index, self.shape)):
+                raise IndexError('Dimension index out of bounds.')
+
+            return (sum(starmap(operator.mul, zip(self.weights, index))) + self.offset, self.shape[len(index):])
+        else:
+            if index > self.shape[0]:
+                raise IndexError('Index overflow.')
+            if index < 0:
+                raise IndexError('Index less than 0.')
+
+            return (index * self.weights[0] + self.offset, self.shape[1:])
+
+    @classmethod
+    def __apply_op(op, lhs, rhs, result=None):
+        '''
+        Broadcasts lhs and rhs as neccessary and applies op elementwise, storing the result in result.
+        If result is None, returns a new ndarray
+        '''
+        if lhs.dimensions < rhs.dimensions:
+            lhs, rhs = rhs, lhs
+
+        if rhs.dimensions < lhs.dimensions:
+            newshape = tuple([1] * (lhs.dimensions - rhs.dimensions) + list(rhs.shape))
+            rhs = ndarray(newshape, False, 0, rhs)
+
+        resulting_shape = tuple(max(l, r) for l, r in zip(lhs.shape, rhs.shape))
+
+        if result is None:
+            result = ndarray(resulting_shape)
+
+        if result.shape != resulting_shape:
+            raise ValueError(
+                "ndarray of shape {0} can't hold result of operation on arrays with shapes {1} and {2}".format(resulting_shape, lhs.shape, rhs.shape))
+
+        if lhs.dimensions == 1:
+            ls = lhs.shape[0]
+            rs = rhs.shape[0]
+            for i in range(result.shape[0]):
+                result[i] = op(lhs[i % ls], rhs[i % rs])
+        else:
+            for l, r, o in zip(lhs, rhs, result):
+                ndarray.__apply_op(op, l, r, o)
+
+        return result
 
     def __len__(self):
         if self.shape == ():
@@ -112,33 +182,24 @@ class ndarray:
         raise NotImplementedError()
 
     def __setitem__(self, key, value):
-        # TODO:
-        raise NotImplementedError()
+        if isinstance(key, slice):
+            raise NotImplementedError()
+
+        index, resulting_shape = self.__parse_index(key)
+
+        if resulting_shape != ():
+            raise NotImplementedError()
+        else:
+            self.buffer[index] = value
 
     def __getitem__(self, key):
         if self.shape == ():
             raise TypeError('Indexing 0-d array not allowed.')
 
-        if not isinstance(key, tuple):
-            index = key
-            if index > self.shape[0]:
-                raise IndexError('Index overflow.')
-            if index < 0:
-                raise IndexError('Index less than 0.')
-
-            resulting_shape = self.shape[1:]
-
-        else:
-            if len(key) > len(self.shape):
-                raise IndexError('Index has more dimensions than array.')
-            if any(dim > limit or dim < 0 for dim, limit in zip(key, self.shape)):
-                raise IndexError('Dimension index out of bounds.')
-
-            index = sum(starmap(mul, zip(self.weights, key)))
-            resulting_shape = self.shape[len(key):]
+        index, resulting_shape = self.__parse_index(key)
 
         if resulting_shape != ():
-            return ndarray(resulting_shape, buffer=self.buffer, copy=False, base=self)
+            return ndarray(resulting_shape, copy=False, offset=index, base=self)
         else:
             return self.buffer[index]
 
@@ -147,38 +208,14 @@ class ndarray:
         return 'ndarray({0}, {1})'.format(self.shape, self.buffer)
 
     def __eq__(self, other):
-        if isinstance(other, ndarray):
-            return self.shape == other.shape and self.buffer == other.buffer
-        elif isinstance(other, collections.Sequence):
+        if isinstance(other, collections.Sequence):
             shape = infer_shape(other)
-            return self.shape == shape and self.buffer == other.buffer
+            if self.shape != shape:
+                return False
+
+            return all(my == foreign for my, foreign in zip(self, other))
 
         return NotImplemented
-
-    def __imul__(self, other):
-        if isinstance(other, collections.Sequence):
-            othershape = infer_shape(other)
-
-            if len(othershape) > len(self.shape):
-                raise ValueError("Too many dimensions in multiplicant")
-            elif len(othershape) == len(self.shape):
-                for sub in self:
-                    sub *= other[i % othershape[0]]
-            else:
-                for sub in self:
-                    sub *= other
-
-        elif isinstance(other, numbers.Real):
-            if self.shape == ():
-                self.buffer *= other
-            else:
-                for i in range(reduce(mul, self.shape)):
-                    self.buffer[offset + i] *= other
-
-    def __mul__(self, other):
-        new = copy.copy(self)
-        new *= other
-        return new
 
 collections.Sequence.register(ndarray)
 

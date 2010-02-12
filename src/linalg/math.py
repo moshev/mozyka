@@ -1,5 +1,5 @@
 import numbers
-from ndarray import *
+from .ndarray import *
 
 def dot(ndarr, vector):
     if not isinstance(ndarr, ndarray) or not isinstance(vector, ndarray):
@@ -39,4 +39,6 @@ def identity_matrix(size):
 
     for i in range(size):
         m[i, i] = 1
+
+    return m
 
