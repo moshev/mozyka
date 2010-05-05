@@ -8,18 +8,20 @@ mozyka=~/Projects/mozyka CD=. flags=r in=in.vim out=out.vim {
   geometry/geometry.py
   geometry/models.py
   geometry/relations.py
-  geometry/test_geometry.py
-  geometry/test_util.py
   linalg/__init__.py
+  linalg/math.py
   linalg/ndarray.py
-  linalg/test_ndarray.py
+  linalg/test_internal.py
   main.py
   plum/__init__.py
   plum/generic.py
   plum/interface.py
   random_render.py
+  test_geometry.py
   test_input.py
+  test_ndarray.py
   test_render.py
+  test_util.py
  }
  glue=src filter="**/*.pyx **/*.pxd" {
   plum/klump.pyx
