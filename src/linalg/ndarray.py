@@ -18,14 +18,46 @@ def infer_shape(sequence):
         sequence = sequence[0]
     return tuple(shape)
 
+def listify(iterable):
+    '''
+    Takes an iterable and returns a list of the contents.
+    If the iterable contains iterables, they are listified recursively.
+    '''
+    return [listify(x) if isinstance(x, collections.Iterable) else x for x in iterable]
+
+def flatten(listlist):
+    '''
+    Takes a list of [lists of...] items.
+    returns a single-level list of all items.
+    '''
+    if not isinstance(listlist, list):
+        raise TypeError('\'' + listlist.__class__.__name__ + '\' is not a list.')
+
+    flat = []
+    for item in listlist:
+        if isinstance(item, list):
+            flat += flatten(item)
+        else:
+            flat.append(item)
+    return flat
+
 def array(buffer):
     if isinstance(buffer, ndarray):
         return ndarray(buffer.shape, copy=True, base=buffer)
     elif isinstance(buffer, collections.Sequence):
         shape = infer_shape(buffer)
+        
         for i in range(len(shape) - 1):
-            buffer = sum(buffer, [])
+            buffer = sum((list(x) for x in buffer), [])
+        
+        if len(shape) == 1:
+            buffer = list(buffer)
+        
         return ndarray(shape, base=buffer)
+    elif isinstance(buffer, collections.Iterable):
+        buffer = listify(buffer)
+        shape = infer_shape(buffer)
+        return ndarray(shape, base=flatten(buffer))
     else:
         raise TypeError(buffer.__class__.__name__)
 
@@ -132,12 +164,29 @@ class ndarray:
 
             return (index * self.weights[0] + self.offset, self.shape[1:])
 
-    @classmethod
+    @staticmethod
     def __apply_op(op, lhs, rhs, result=None):
         '''
         Broadcasts lhs and rhs as neccessary and applies op elementwise, storing the result in result.
-        If result is None, returns a new ndarray
+        If result is None, returns a new ndarray.
+        lhs must be an ndarray.
+        if rhs is not, it is assumed to be a number.
         '''
+        if not isinstance(rhs, ndarray):
+            if result is None:
+                result = ndarray(lhs.shape)
+            else:
+                assert(result.shape == lhs.shape)
+            
+            if lhs.dimensions == 1:
+                for i, v in zip(range(len(lhs)), lhs):
+                    result[i] = op(rhs, v)
+            else:
+                for l, r in zip(lhs, result):
+                    ndarray.__apply_op(op, l, rhs, r)
+            
+            return result
+
         if lhs.dimensions < rhs.dimensions:
             lhs, rhs = rhs, lhs
 
@@ -169,7 +218,7 @@ class ndarray:
         if self.shape == ():
             return 0
         else:
-            return shape[0]
+            return self.shape[0]
 
     def __iter__(self):
         return Iterator(self)
@@ -216,6 +265,18 @@ class ndarray:
             return all(my == foreign for my, foreign in zip(self, other))
 
         return NotImplemented
+
+    def __add__(self, other):
+        return ndarray.__apply_op(operator.add, self, other)
+
+    def __sub__(self, other):
+        return ndarray.__apply_op(operator.sub, self, other)
+
+    def __mul__(self, other):
+        return ndarray.__apply_op(operator.mul, self, other)
+
+    def __div__(self, other):
+        return ndarray.__apply_op(operator.div, self, other)
 
 collections.Sequence.register(ndarray)
 
