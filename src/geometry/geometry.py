@@ -5,6 +5,7 @@ from copy import copy
 from array import array
 from collections import defaultdict
 from itertools import islice
+import linalg
 from ._util import *
 __all__ = ['Vector', 'Edge', 'Line', 'Ray', 'Plane', 'Triangle', 'Model', 'cross', 'normalize']
 
@@ -29,11 +30,11 @@ class Vector:
         init(iterable or generator): creates a vector with xyz = tuple(iterable or generator)
         '''
         if len(args) == 0:
-            self.xyz = (0.0, 0.0, 0.0)
+            self.xyz = linalg.array((0.0, 0.0, 0.0))
         elif len(args) == 1:
-            self.xyz = tuple(args[0])
+            self.xyz = linalg.array(args[0])
         else:
-            self.xyz = tuple(args)
+            self.xyz = linalg.array(args)
 
     x = property(lambda self: self.xyz[0])
     y = property(lambda self: self.xyz[1])

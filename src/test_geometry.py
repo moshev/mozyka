@@ -13,6 +13,9 @@ class TestVector(unittest.TestCase):
     def test_add(self):
         self.assertEqual(self.e1 + self.e2, Vector(1, 1, 0))
 
+    def test_neg(self):
+        self.assertEqual(-self.e1, Vector(-1, 0, 0))
+
     def test_dot(self):
         self.assertAlmostEqual(self.e1 * self.e2, 0)
         self.assertAlmostEqual(self.e2 * self.e3, 0)
