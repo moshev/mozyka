@@ -15,6 +15,18 @@ class TestBasic(unittest.TestCase):
         self.assertFalse(copyarray.buffer is self.array.buffer)
         self.assertSameElements(copyarray.buffer, self.array.buffer)
 
+    def test_range(self):
+        '''
+        Test creating an ndarray from a range
+        '''
+        array1 = array(range(3))
+        self.assertEqual(array1.shape, (3,))
+        self.assertSameElements(array1.buffer, range(3))
+
+        array2 = array([0, 1, 2] for x in range(3))
+        self.assertEqual(array1.shape, (3,3))
+        self.assertSameElements(array1.buffer, list(range(3)) * 3)
+
 class TestSimpleIdx(unittest.TestCase):
 
     def setUp(self):
@@ -53,15 +65,34 @@ class TestComplexIdx(unittest.TestCase):
         '''
         self.assertSameElements(self.array4d[2][0][1], self.array4d[2, 0, 1])
 
+class TestArrayMath(unittest.TestCase):
+
+    def setUp(self):
+        self.array = ndarray((2, 2), base=list(range(4)))
+
+    def test_same(self):
+        other = ndarray((2, 2), base=list(range(4)))
+        result_add = self.array + other
+        self.assertSameElements(result_add.buffer, [x + x for x in range(4)])
+        result_mul = self.array * other
+        self.assertSameElements(result_mul.buffer, [x * x for x in range(4)])
+
+    def test_scalar(self):
+        result = self.array + 4
+        self.assertSameElements(result.buffer, [x + 4 for x in range(4)])
+
 class TestMath(unittest.TestCase):
 
     def setUp(self):
-        self.vector = ndarray((4,), [0, 1, 0, 1])
+        self.vector = vector(array=ndarray((4,), base=[0, 1, 0, 1]))
         self.matrix = identity_matrix(4)
+
+    def test_initialization(self):
+        self.assertSameElements(self.vector.array, [0, 1, 0, 1])
 
     def test_multiplication(self):
         m = self.matrix * self.vector
-        self.assertSameElements(m.buffer, [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+        self.assertSameElements(m.array, [0, 1, 0, 1])
 
 if __name__ == '__main__':
     unittest.main()
