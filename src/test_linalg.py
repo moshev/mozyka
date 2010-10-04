@@ -23,8 +23,8 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(array1.shape, (3,))
         self.assertSameElements(array1.buffer, range(3))
 
-        array2 = array([0, 1, 2] for x in range(3))
-        self.assertEqual(array1.shape, (3,3))
+        array2 = array([list(range(3))] * 3)
+        self.assertEqual(array2.shape, (3,3))
         self.assertSameElements(array1.buffer, list(range(3)) * 3)
 
 class TestSimpleIdx(unittest.TestCase):
