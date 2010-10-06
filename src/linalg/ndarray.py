@@ -278,6 +278,9 @@ class ndarray:
     def __div__(self, other):
         return ndarray.__apply_op(operator.div, self, other)
 
+    def __deepcopy__(self):
+        return array(self)
+
 collections.Sequence.register(ndarray)
 
 class Iterator:
