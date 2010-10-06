@@ -1,5 +1,7 @@
 import numbers
 import functools
+import copy
+import operator
 from .ndarray import *
 
 def dot(ndarr, vector):
@@ -42,6 +44,7 @@ class matrix:
         The matrix is row-major indexed. You may provide an array to be wrapped, instead of creating a new one.
         '''
         if array is not None:
+            assert(array.dimensions == 2)
             self.array = array
         else:
             if columns == 0: columns = rows
@@ -55,7 +58,7 @@ class matrix:
     def __getitem__(self, *args):
         item = self.array.__getitem__(*args)
         if isinstance(item, ndarray):
-            raise NotImplementedError()
+            return vector(array=item)
         else:
             return item
     
@@ -72,6 +75,62 @@ class matrix:
         else:
             raise NotImplementedError()
 
+    @property
+    def shape(self):
+        return self.array.shape
+
+def gaussian_decomposition(matrix):
+    """
+    Returns a tuple of matrices (A, B), which have only zeroes above or below the diagonal and
+    matrix == A * B
+    The matrix must be square.
+    """
+    if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError('Matrix not square')
+
+    size = matrix.shape[0]
+    l = copy.deepcopy(matrix)
+    r = identity_matrix(size)
+    for col in l:
+        m, im = max(zip(col, range(len(col))))
+        if m == 0.0:
+            continue
+        
+        # normalize row with largest element.
+        for lcol, rcol in zip(l, r):
+            lcol[im] /= m
+            rcol[im] /= m
+
+        for irow in range(size):
+            if irow = im: continue
+
+            for lcol, rcol in zip(l, r):
+                lcol[irow] *= 1 - lcol[im]
+                rcol[irow] *= 1 - rcol[im]
+    return (l, r)
+
+
+def determinant(matrix):
+    """
+    Computes the determinant of a matrix.
+    """
+    if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError('Matrix not square')
+
+    if matrix.shape[0] == 1:
+        return matrix[0]
+    elif matrix.shape[0] == 2:
+        return matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0]
+    elif matrix.shape[0] == 3:
+        return matrix[0, 0] * matrix[1, 1] * matrix[2, 2] +
+               matrix[1, 0] * matrix[2, 1] * matrix[0, 2] +
+               matrix[2, 0] * matrix[0, 1] * matrix[1, 2] -
+               matrix[0, 0] * matrix[2, 1] * matrix[1, 2] -
+               matrix[1, 0] * matrix[0, 1] * matrix[2, 2] -
+               matrix[2, 0] * matrix[1, 1] * matrix[0, 2]
+    else:
+        l, r = gaussian_decomposition(matrix)
+        return functools.reduce(operator.mul, (l[i, i] * r[i, i] for i in range(matrix.shape[0])))
 
 def identity_matrix(size):
     '''
