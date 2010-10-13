@@ -278,8 +278,8 @@ class ndarray:
     def __div__(self, other):
         return ndarray.__apply_op(operator.div, self, other)
 
-    def __deepcopy__(self):
-        return array(self)
+    def __deepcopy__(self, memo):
+        return ndarray(shape=self.shape, copy=False, offset=self.offset, base=copy.deepcopy(self.base, memo))
 
 collections.Sequence.register(ndarray)
 

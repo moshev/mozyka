@@ -85,14 +85,28 @@ class TestMath(unittest.TestCase):
 
     def setUp(self):
         self.vector = vector(array=ndarray((4,), base=[0, 1, 0, 1]))
-        self.matrix = identity_matrix(4)
+        self.identity_matrix = identity_matrix(4)
 
     def test_initialization(self):
         self.assertSameElements(self.vector.array, [0, 1, 0, 1])
 
     def test_multiplication(self):
-        m = self.matrix * self.vector
+        m = self.identity_matrix * self.vector
         self.assertSameElements(m.array, [0, 1, 0, 1])
+
+    def test_gaussian_decomposition(self):
+        m = matrix(array=array([
+[0.511779539539, 0.398510172288, 0.675326308903, 0.924379685986],
+[0.438320890402, 0.392642977493, 0.354439110111, 0.415673177932],
+[0.615214193708, 0.79257968066, 0.756285458803, 0.499050181293],
+[0.578050771601, 0.913565282093, 0.115584670984, 0.307027987161]]))
+        a, b = gaussian_decomposition(self.identity_matrix)
+        for i in range(1, len(a)):
+            for j in range(i):
+                self.assertAlmostEqual(a[i, j], 0)
+                self.assertAlmostEqual(b[j, i], 0)
+
+        for 
 
 if __name__ == '__main__':
     unittest.main()

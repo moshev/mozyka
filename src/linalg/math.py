@@ -75,6 +75,13 @@ class matrix:
         else:
             raise NotImplementedError()
 
+    def __iter__(self):
+        for i in range(self.shape[0]):
+            yield self[i]
+
+    def __len__(self):
+        return self.shape[0]
+
     @property
     def shape(self):
         return self.array.shape
@@ -102,7 +109,7 @@ def gaussian_decomposition(matrix):
             rcol[im] /= m
 
         for irow in range(size):
-            if irow = im: continue
+            if irow == im: continue
 
             for lcol, rcol in zip(l, r):
                 lcol[irow] *= 1 - lcol[im]
@@ -122,11 +129,11 @@ def determinant(matrix):
     elif matrix.shape[0] == 2:
         return matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0]
     elif matrix.shape[0] == 3:
-        return matrix[0, 0] * matrix[1, 1] * matrix[2, 2] +
-               matrix[1, 0] * matrix[2, 1] * matrix[0, 2] +
-               matrix[2, 0] * matrix[0, 1] * matrix[1, 2] -
-               matrix[0, 0] * matrix[2, 1] * matrix[1, 2] -
-               matrix[1, 0] * matrix[0, 1] * matrix[2, 2] -
+        return matrix[0, 0] * matrix[1, 1] * matrix[2, 2] +\
+               matrix[1, 0] * matrix[2, 1] * matrix[0, 2] +\
+               matrix[2, 0] * matrix[0, 1] * matrix[1, 2] -\
+               matrix[0, 0] * matrix[2, 1] * matrix[1, 2] -\
+               matrix[1, 0] * matrix[0, 1] * matrix[2, 2] -\
                matrix[2, 0] * matrix[1, 1] * matrix[0, 2]
     else:
         l, r = gaussian_decomposition(matrix)
