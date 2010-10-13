@@ -27,6 +27,16 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(array2.shape, (3,3))
         self.assertSameElements(array1.buffer, list(range(3)) * 3)
 
+    def test_vector_set(self):
+        '''
+        Test assigning to a vector of elements
+        '''
+        arr = ndarray((3, 3))
+        arr[0] = range(3)
+        self.assertSameElements(arr[0], range(3))
+        self.assertSameElements(arr[1], [0] * 3)
+        self.assertSameElements(arr[2], [0] * 3)
+
 class TestSimpleIdx(unittest.TestCase):
 
     def setUp(self):
@@ -100,11 +110,17 @@ class TestMath(unittest.TestCase):
 [0.438320890402, 0.392642977493, 0.354439110111, 0.415673177932],
 [0.615214193708, 0.79257968066, 0.756285458803, 0.499050181293],
 [0.578050771601, 0.913565282093, 0.115584670984, 0.307027987161]]))
+        
         a, b = gaussian_decomposition(m)
         for i in range(1, len(a)):
             for j in range(i):
                 self.assertAlmostEqual(a[i, j], 0)
                 self.assertAlmostEqual(b[j, i], 0)
+
+        m2 = a * b
+        for mitem, m2item in zip (m.array.base, m2.array.base):
+            self.assertAlmostEqual(mitem, m2item)
+        
 
 if __name__ == '__main__':
     unittest.main()
