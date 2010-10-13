@@ -100,13 +100,11 @@ class TestMath(unittest.TestCase):
 [0.438320890402, 0.392642977493, 0.354439110111, 0.415673177932],
 [0.615214193708, 0.79257968066, 0.756285458803, 0.499050181293],
 [0.578050771601, 0.913565282093, 0.115584670984, 0.307027987161]]))
-        a, b = gaussian_decomposition(self.identity_matrix)
+        a, b = gaussian_decomposition(m)
         for i in range(1, len(a)):
             for j in range(i):
                 self.assertAlmostEqual(a[i, j], 0)
                 self.assertAlmostEqual(b[j, i], 0)
-
-        for 
 
 if __name__ == '__main__':
     unittest.main()
