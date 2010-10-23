@@ -172,25 +172,38 @@ class ndarray:
         lhs must be an ndarray.
         if rhs is not, it is assumed to be a number.
         '''
-        if not isinstance(rhs, ndarray):
+        if isinstance(rhs, numbers.Number):
             if result is None:
                 result = ndarray(lhs.shape)
             else:
                 assert(result.shape == lhs.shape)
+
+            flatresult = ndarray(shape=(result.flat_length,), copy=False, base=result)
+            flatlhs = ndarray(shape=(lhs.flat_length,), copy=False, base=lhs)
             
-            if lhs.dimensions == 1:
-                for i, v in zip(range(len(lhs)), lhs):
-                    result[i] = op(rhs, v)
+            for i, v in zip(range(len(flatlhs)), flatlhs):
+                flatresult[i] = op(v, rhs)
+            
+            return result
+
+        elif isinstance(lhs, numbers.Number):
+            if result is None:
+                result = ndarray(rhs.shape)
             else:
-                for l, r in zip(lhs, result):
-                    ndarray.__apply_op(op, l, rhs, r)
+                assert(result.shape == rhs.shape)
+
+            flatresult = ndarray(shape=(result.flat_length,), copy=False, base=result)
+            flatrhs = ndarray(shape=(rhs.flat_length,), copy=False, base=rhs)
+            
+            for i, v in zip(range(len(flatrhs)), flatrhs):
+                flatresult[i] = op(lhs, v)
             
             return result
 
         if lhs.dimensions < rhs.dimensions:
-            lhs, rhs = rhs, lhs
-
-        if rhs.dimensions < lhs.dimensions:
+            newshape = tuple([1] * (rhs.dimensions - lhs.dimensions) + list(lhs.shape))
+            lhs = ndarray(newshape, False, 0, rhs)
+        elif rhs.dimensions < lhs.dimensions:
             newshape = tuple([1] * (lhs.dimensions - rhs.dimensions) + list(rhs.shape))
             rhs = ndarray(newshape, False, 0, rhs)
 
@@ -237,14 +250,23 @@ class ndarray:
         index, resulting_shape = self.__parse_index(key)
 
         if resulting_shape != ():
-            raise NotImplementedError()
+            arr_values = array(value)
+
+            if arr_values.shape != resulting_shape:
+                raise ValueError('Shape mismatch: given %s, needs %s'.format(arr_values.shape, resulting_shape))
+
+            buf = arr_values.buffer
+            start = arr_values.offset
+            length = arr_values.flat_length
+            end = start + length
+            self.buffer[index:index + length] = buf[start: end]
         else:
             self.buffer[index] = value
 
     def __getitem__(self, key):
         if self.shape == ():
             raise TypeError('Indexing 0-d array not allowed.')
-
+        
         index, resulting_shape = self.__parse_index(key)
 
         if resulting_shape != ():
@@ -275,11 +297,23 @@ class ndarray:
     def __mul__(self, other):
         return ndarray.__apply_op(operator.mul, self, other)
 
-    def __div__(self, other):
-        return ndarray.__apply_op(operator.div, self, other)
+    def __truediv__(self, other):
+        return ndarray.__apply_op(operator.truediv, self, other)
+
+    def __radd__(self, other):
+        return ndarray.__apply_op(operator.add, other, self)
+
+    def __rsub__(self, other):
+        return ndarray.__apply_op(operator.sub, other, self)
+
+    def __rmul__(self, other):
+        return ndarray.__apply_op(operator.mul, other, self)
+
+    def __rtruediv__(self, other):
+        return ndarray.__apply_op(operator.truediv, other, self)
 
     def __deepcopy__(self, memo):
-        return ndarray(shape=self.shape, copy=False, offset=self.offset, base=copy.deepcopy(self.base, memo))
+        return ndarray(shape=self.shape, copy=False, offset=self.offset, base=copy.deepcopy(self.base or self.buffer, memo))
 
 collections.Sequence.register(ndarray)
 

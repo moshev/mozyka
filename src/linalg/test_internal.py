@@ -1,4 +1,5 @@
-from ndarray import infer_shape, listify, flatten
+from ndarray import infer_shape, listify, flatten, array
+from copy import deepcopy
 import unittest
 
 class TestNDArray(unittest.TestCase):
@@ -16,6 +17,14 @@ class TestNDArray(unittest.TestCase):
         self.assertEqual(flatten([0, 1, 2, 3]), [0, 1, 2, 3])
         self.assertEqual(flatten([[0], [1], [2]]), [0, 1, 2])
         self.assertEqual(flatten([[0, 1], 2, [3, [4]]]), list(range(5)))
+
+    def test_copy(self):
+        a = array([[0, 1, 2]] * 3)
+        self.assertEqual(deepcopy(a[0]).buffer, a[0].buffer)
+        self.assertSequenceEqual(array(a[0]).buffer, [0, 1, 2])
+        self.assertIsNot(deepcopy(a).buffer, a.buffer)
+        b = array(a[0])
+        self.assertIsNot(b.buffer, a.buffer)
 
 if __name__ == '__main__':
     unittest.main()

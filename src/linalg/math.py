@@ -34,6 +34,14 @@ class vector:
     def __getitem__(self, *args):
         return self.array.__getitem__(*args)
 
+    def __mul__(self, other):
+        if isinstance(other, vector):
+            return sum(self.array * other.array)
+        elif isinstance(other, numbers.Number):
+            return vector(array=(self.array * other))
+        else:
+            raise NotImplementedError()
+
     def __len__(self):
         return len(self.array)
 
@@ -64,13 +72,15 @@ class matrix:
     
     def __mul__(self, other):
         if isinstance(other, matrix):
-            raise NotImplementedError()
+            if self.shape[1] != other.shape[0]:
+                raise ValueError('Incompatible shapes')
+            zerovec = array([0] * other.shape[1])
+            values = array(sum((scalar * row for scalar, row in zip (myrow, other.array)), zerovec) for myrow in self.array)
+            return matrix(array=values)
         elif isinstance(other, vector):
             if self.array.shape[0] != len(other):
                 raise ValueError('Incompatible shapes')
-            result_array = ndarray((self.array.shape[1],))
-            for column, scalar in zip(self.array, other.array):
-                result_array += column * scalar
+            result_array = array(row * other for row in self)
             return vector(array=result_array)
         else:
             raise NotImplementedError()
@@ -86,35 +96,32 @@ class matrix:
     def shape(self):
         return self.array.shape
 
-def gaussian_decomposition(matrix):
+def gaussian_decomposition(square_matrix):
     """
     Returns a tuple of matrices (A, B), which have only zeroes above or below the diagonal and
     matrix == A * B
     The matrix must be square.
     """
-    if len(matrix.shape) != 2 or matrix.shape[0] != matrix.shape[1]:
+    if len(square_matrix.shape) != 2 or square_matrix.shape[0] != square_matrix.shape[1]:
         raise ValueError('Matrix not square')
 
-    size = matrix.shape[0]
-    l = copy.deepcopy(matrix)
-    r = identity_matrix(size)
-    for col in l:
-        m, im = max(zip(col, range(len(col))))
-        if m == 0.0:
+    size = square_matrix.shape[0]
+    l = copy.deepcopy(square_matrix.array)
+    r = identity_matrix(size).array
+    for i in range(size):
+        if l[i, i] == 0:
             continue
+
+        m = l[i, i]
         
-        # normalize row with largest element.
-        for lcol, rcol in zip(l, r):
-            lcol[im] /= m
-            rcol[im] /= m
-
-        for irow in range(size):
-            if irow == im: continue
-
-            for lcol, rcol in zip(l, r):
-                lcol[irow] *= 1 - lcol[im]
-                rcol[irow] *= 1 - rcol[im]
-    return (l, r)
+        l[i] /= m
+        r[i] /= m
+        
+        for irow in range(i+1, size):
+            l[irow] *= lc
+            r[irow] *= rc
+        
+    return (matrix(array=l), matrix(array=r))
 
 
 def determinant(matrix):
