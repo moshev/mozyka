@@ -110,7 +110,11 @@ class ndarray:
             self.weights.insert(0, dim * self.weights[0])
         self.weights = tuple(self.weights[1:])
 
-        buffer = base.buffer if isinstance(base, ndarray) else base
+        if isinstance(base, ndarray):
+            offset += base.offset
+            buffer = base.buffer
+        else:
+            buffer = base
 
         if buffer is None:
             self.base = None
@@ -270,7 +274,9 @@ class ndarray:
         index, resulting_shape = self.__parse_index(key)
 
         if resulting_shape != ():
-            return ndarray(resulting_shape, copy=False, offset=index, base=self)
+            # The offset argument to the constructor is
+            # the offset inside the logical array, not inside the buffer
+            return ndarray(resulting_shape, copy=False, offset=index - self.offset, base=self)
         else:
             return self.buffer[index]
 

@@ -118,7 +118,27 @@ class TestMath(unittest.TestCase):
         m = self.identity_matrix * self.vector
         self.assertSequenceEqual(m.array, [0, 1, 0, 1])
 
-    def test_gaussian_decomposition(self):
+    def test_gaussian_decomposition1(self):
+        m = matrix(array=array([[1, 0, 0, 0],
+                                [1, 1, 0, 0],
+                                [1, 1, 1, 0],
+                                [1, 1, 1, 1]]))
+        
+        a, b = gaussian_decomposition(m)
+        self.assertEqual(a.array, identity_matrix(4).array)
+        self.assertEqual(b.array, array([[ 1,  0,  0, 0],
+                                         [-1,  1,  0, 0],
+                                         [ 0, -1,  1, 0],
+                                         [ 0,  0, -1, 1]]))
+
+        m2 = a * b
+        for i in range(1, len(a)):
+            for j in range(i):
+                self.assertAlmostEqual(a[i, j], 0)
+                self.assertAlmostEqual(b[j, i], 0)
+                self.assertAlmostEqual(m[i, j], m2[i, j], msg='Matrices differ at index {0}'.format((i, j)))
+
+    def test_gaussian_decomposition2(self):
         m = matrix(array=array([[0.511779539539, 0.398510172288, 0.675326308903, 0.924379685986],
                                 [0.438320890402, 0.392642977493, 0.354439110111, 0.415673177932],
                                 [0.615214193708, 0.792579680660, 0.756285458803, 0.499050181293],

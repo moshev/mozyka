@@ -108,18 +108,18 @@ def gaussian_decomposition(square_matrix):
     size = square_matrix.shape[0]
     l = copy.deepcopy(square_matrix.array)
     r = identity_matrix(size).array
-    for i in range(size):
+    for i in range(size - 1):
         if l[i, i] == 0:
             continue
 
         m = l[i, i]
         
-        l[i] /= m
-        r[i] /= m
+        lnorm = l[i] / m
+        rnorm = array(r[i])
         
         for irow in range(i+1, size):
-            l[irow] *= lc
-            r[irow] *= rc
+            r[irow] -= l[irow, i] * rnorm
+            l[irow] -= l[irow, i] * lnorm
         
     return (matrix(array=l), matrix(array=r))
 
