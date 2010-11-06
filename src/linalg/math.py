@@ -123,6 +123,16 @@ def gaussian_decomposition(square_matrix):
         
     return (matrix(array=l), matrix(array=r))
 
+def solve(a, b):
+    '''
+    Returns a n-vector x, which is the solution to the linear system
+    | a * x = b
+    where a is an n-by-m matrix and b is an m-vector.
+    a and b can be instances of matrix and vector or ndarray.
+    returns None if the system doesn't have a solution.
+    '''
+    # TODO: write this
+    return None
 
 def determinant(matrix):
     """
