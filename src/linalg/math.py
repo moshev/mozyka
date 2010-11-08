@@ -141,11 +141,18 @@ def solve(a, b):
     if len(b.shape) != 1:
         raise ValueError('Result vector argument not one-dimensional.')
 
-    if a.shape[1] != b.shape[0]:
+    if a.shape[0] != b.shape[0]:
         raise ValueError('Dimensions mismatch: height of a {0:d} != length of b {1:d}'.format(a.shape[1], b.shape[0]))
 
-    
+    a = copy.deepcopy(a)
+    b = copy.deepcopy(b)
+    vs = []
+    for icol in range(a.shape[0]):
+        m, im = max((a[icol, i], i) for i in range(a.shape[1]))
+        vs.append(im)
 
+        
+    
     return None
 
 def determinant(matrix):
