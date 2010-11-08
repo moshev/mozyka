@@ -131,7 +131,21 @@ def solve(a, b):
     a and b can be instances of matrix and vector or ndarray.
     returns None if the system doesn't have a solution.
     '''
-    # TODO: write this
+    if isinstance(a, matrix):
+        a = a.array
+    if isinstance(b, vector):
+        b = b.array
+
+    if len(a.shape) != 2:
+        raise ValueError('Coefficients argument not two-dimensional.')
+    if len(b.shape) != 1:
+        raise ValueError('Result vector argument not one-dimensional.')
+
+    if a.shape[1] != b.shape[0]:
+        raise ValueError('Dimensions mismatch: height of a {0:d} != length of b {1:d}'.format(a.shape[1], b.shape[0]))
+
+    
+
     return None
 
 def determinant(matrix):
