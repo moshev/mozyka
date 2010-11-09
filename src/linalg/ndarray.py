@@ -85,6 +85,9 @@ class ndarray:
         ndarray((3, 3), [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
         '''
 
+        if isinstance(shape, numbers.Number):
+            shape = (shape,)
+
         if shape == ():
             raise ValueError('shape must be a nonempty tuple')
 
@@ -257,7 +260,7 @@ class ndarray:
             arr_values = array(value)
 
             if arr_values.shape != resulting_shape:
-                raise ValueError('Shape mismatch: given %s, needs %s'.format(arr_values.shape, resulting_shape))
+                raise ValueError('Shape mismatch: given {0:s}, needs {0:s}'.format(arr_values.shape, resulting_shape))
 
             buf = arr_values.buffer
             start = arr_values.offset
@@ -320,6 +323,12 @@ class ndarray:
 
     def __deepcopy__(self, memo):
         return ndarray(shape=self.shape, copy=False, offset=self.offset, base=copy.deepcopy(self.base or self.buffer, memo))
+    
+    def as_lists(self):
+        if len(self.shape) == 1:
+            return list(self.buffer[self.offset:self.offset + self.flat_length])
+        else:
+            return [x.as_lists() for x in self]
 
 collections.Sequence.register(ndarray)
 

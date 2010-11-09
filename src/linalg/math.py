@@ -125,11 +125,12 @@ def gaussian_decomposition(square_matrix):
 
 def solve(a, b):
     '''
-    Returns a n-vector x, which is the solution to the linear system
+    Returns an n-vector x, which is the solution to the linear system
     | a * x = b
     where a is an n-by-m matrix and b is an m-vector.
     a and b can be instances of matrix and vector or ndarray.
     returns None if the system doesn't have a solution.
+    TODO: CURRENTLY DOES NOT SUPPORT THE CASE WHEN n ≠ m
     '''
     if isinstance(a, matrix):
         a = a.array
@@ -142,18 +143,43 @@ def solve(a, b):
         raise ValueError('Result vector argument not one-dimensional.')
 
     if a.shape[0] != b.shape[0]:
-        raise ValueError('Dimensions mismatch: height of a {0:d} != length of b {1:d}'.format(a.shape[1], b.shape[0]))
+        raise ValueError('Dimensions mismatch: height of a {0:d} != length of b {1:d}'.format(a.shape[0], b.shape[0]))
+
+    if a.shape[0] != a.shape[1]:
+        raise NotImplementedError()
 
     a = copy.deepcopy(a)
     b = copy.deepcopy(b)
-    vs = []
-    for icol in range(a.shape[0]):
-        m, im = max((a[icol, i], i) for i in range(a.shape[1]))
-        vs.append(im)
-
+    for ilead in range(a.shape[1]):
+        m, im = max((abs(a[i, ilead]), i) for i in range(ilead, a.shape[0]))
+        m = a[im, ilead]
         
+        if im != ilead:
+            # TODO: Make ndarray act in a way that will make the below easier
+            tmp = copy.deepcopy(a[im])
+            a[im] = a[ilead]
+            a[ilead] = tmp
+            tmp = copy.deepcopy(b[im])
+            b[im] = b[ilead]
+            b[ilead] = tmp
+            del tmp
+
+        if m == 0:
+            raise NotImplementedError()
+
+        a[ilead] /= m
+        b[ilead] /= m
+
+        for irow in range(ilead + 1, a.shape[0]):
+            if a[irow, ilead] != 0:
+                b[irow] -= b[ilead] * a[irow, ilead]
+                a[irow] -= a[ilead] * a[irow, ilead]
+
+    x = ndarray(a.shape[1])
+    for ix in reversed(range(a.shape[0])):
+        x[ix] = b[ix] - sum(a[ix, i] * x[i] for i in range(ix+1, a.shape[1]))
     
-    return None
+    return x
 
 def determinant(matrix):
     """

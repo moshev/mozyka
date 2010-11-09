@@ -50,6 +50,25 @@ class TestBasic(unittest.TestCase):
         self.assertSequenceEqual(a[1], b[0])
         self.assertEqual(a[1], b[0])
 
+    def test_iops(self):
+        '''
+        Tests +=, -=, *= and /=
+        '''
+        a = array([[1, 1]]*4)
+        b = array([[1, 1],
+                   [1, 1],
+                   [2, 2],
+                   [2, 2]])
+        a[0] += b[0]
+        a[1] -= b[1]
+        a[2] *= b[2]
+        a[3] /= b[3]
+        self.assertSameElements(a.buffer, [2, 2, 0, 0, 2, 2, 0.5, 0.5])
+        c = a[0]
+        c[1] += c[0]
+        self.assertEqual(c[1], a[0, 1])
+        self.assertEqual(c[1], 4)
+
 
 class TestSimpleIdx(unittest.TestCase):
 
@@ -118,40 +137,22 @@ class TestMath(unittest.TestCase):
         m = self.identity_matrix * self.vector
         self.assertSequenceEqual(m.array, [0, 1, 0, 1])
 
-    def test_gaussian_decomposition1(self):
-        m = matrix(array=array([[1, 0, 0, 0],
-                                [1, 1, 0, 0],
-                                [1, 1, 1, 0],
-                                [1, 1, 1, 1]]))
+    def test_solver1(self):
+        a = array([[1, 0, 0, 0],
+                   [1, 1, 0, 0],
+                   [1, 1, 1, 0],
+                   [1, 1, 1, 1]])
+
+        bs = array([[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 1]])
+        cs = [[0, 0, 0, 0], [1, -1, 0, 0], [1, -1, 0, 1]]
+        for b, c in zip(bs, cs):
+            self.assertSameElements(c, solve(a, b))
         
-        a, b = gaussian_decomposition(m)
-        self.assertEqual(a.array, identity_matrix(4).array)
-        self.assertEqual(b.array, array([[ 1,  0,  0, 0],
-                                         [-1,  1,  0, 0],
-                                         [ 0, -1,  1, 0],
-                                         [ 0,  0, -1, 1]]))
-
-        m2 = a * b
-        for i in range(1, len(a)):
-            for j in range(i):
-                self.assertAlmostEqual(a[i, j], 0)
-                self.assertAlmostEqual(b[j, i], 0)
-                self.assertAlmostEqual(m[i, j], m2[i, j], msg='Matrices differ at index {0}'.format((i, j)))
-
     def test_gaussian_decomposition2(self):
         m = matrix(array=array([[0.511779539539, 0.398510172288, 0.675326308903, 0.924379685986],
                                 [0.438320890402, 0.392642977493, 0.354439110111, 0.415673177932],
                                 [0.615214193708, 0.792579680660, 0.756285458803, 0.499050181293],
                                 [0.578050771601, 0.913565282093, 0.115584670984, 0.307027987161]]))
-        
-        a, b = gaussian_decomposition(m)
-        m2 = a * b
-        for i in range(1, len(a)):
-            for j in range(i):
-                self.assertAlmostEqual(a[i, j], 0)
-                self.assertAlmostEqual(b[j, i], 0)
-                self.assertAlmostEqual(m[i, j], m2[i, j], msg='Matrices differ at index {0}'.format((i, j)))
-
 
 if __name__ == '__main__':
     unittest.main()
